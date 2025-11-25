@@ -66,7 +66,7 @@ export default function LoginPage() {
               required
               // PERBAIKAN: Tambahkan 'text-gray-900' di sini
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-gray-900 bg-white"
-              placeholder="Contoh: 221060500XX"
+              placeholder="NIM"
               value={formData.nim}
               onChange={(e) =>
                 setFormData({ ...formData, nim: e.target.value })
@@ -83,7 +83,8 @@ export default function LoginPage() {
               required
               // PERBAIKAN: Tambahkan 'text-gray-900' di sini juga
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-gray-900 bg-white"
-              placeholder="NIM + Tanggal Lahir (DDMMYYYY)"
+              placeholder="Masukkan Kata Sandi
+            "
               value={formData.password}
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
