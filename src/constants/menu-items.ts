@@ -8,7 +8,6 @@ import {
   User,
   History,
   Info,
-  LogOut,
   CreditCard,
 } from "lucide-react";
 
@@ -59,17 +58,17 @@ export const studentMenuItems: MenuItem[] = [
   },
   {
     title: "Bayar Kas",
-    path: "/dashboard/pay",
+    path: "/pay",
     icon: CreditCard,
   },
   {
     title: "Riwayat Transaksi",
-    path: "/dashboard/history",
+    path: "/history",
     icon: History,
   },
   {
     title: "Profil Saya",
-    path: "/dashboard/profile",
+    path: "/profile",
     icon: User,
   },
   {

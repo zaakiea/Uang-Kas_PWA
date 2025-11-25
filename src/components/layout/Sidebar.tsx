@@ -1,14 +1,15 @@
+// src/components/layout/Sidebar.tsx
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { adminMenuItems, studentMenuItems } from "@/constants/menu-items";
 import { LogOut, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-// Helper untuk menggabungkan class tailwind
+// Helper function untuk class names
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
@@ -19,20 +20,21 @@ interface SidebarProps {
 
 export default function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Pilih menu berdasarkan role
   const menuItems = role === "ADMIN" ? adminMenuItems : studentMenuItems;
 
   // Handle responsive check
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024); // lg breakpoint
-      if (window.innerWidth >= 1024) {
-        setIsOpen(true);
+      const isSmallScreen = window.innerWidth < 1024;
+      setIsMobile(isSmallScreen);
+      if (!isSmallScreen) {
+        setIsOpen(true); // Buka sidebar otomatis di desktop
       } else {
-        setIsOpen(false);
+        setIsOpen(false); // Tutup di mobile
       }
     };
 
@@ -42,21 +44,22 @@ export default function Sidebar({ role }: SidebarProps) {
   }, []);
 
   const handleLogout = () => {
+    // Logika logout sederhana
     localStorage.removeItem("user_session");
-    router.push("/login");
+    window.location.href = "/login";
   };
 
   return (
     <>
-      {/* Mobile Toggle Button */}
+      {/* Tombol Toggle untuk Mobile (Hanya muncul di layar kecil) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow-md lg:hidden"
+        className="fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow-md lg:hidden text-gray-700"
       >
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      {/* Overlay for mobile */}
+      {/* Overlay Gelap untuk Mobile */}
       {isMobile && isOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40"
@@ -64,16 +67,16 @@ export default function Sidebar({ role }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar Container */}
+      {/* Container Sidebar */}
       <aside
         className={cn(
           "fixed top-0 left-0 z-40 h-screen w-64 bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full",
-          "lg:translate-x-0 lg:static" // Reset transform on desktop
+          "lg:translate-x-0 lg:static" // Reset transform agar static di desktop
         )}
       >
         <div className="flex flex-col h-full px-3 py-4 overflow-y-auto">
-          {/* Logo / Brand */}
+          {/* Logo Header */}
           <div className="flex items-center justify-center mb-10 mt-2">
             <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mr-3">
               K
@@ -83,7 +86,7 @@ export default function Sidebar({ role }: SidebarProps) {
             </span>
           </div>
 
-          {/* Menu Items */}
+          {/* Daftar Menu */}
           <ul className="space-y-2 font-medium flex-1">
             {menuItems.map((item, index) => {
               const isActive = pathname === item.path;
@@ -114,7 +117,7 @@ export default function Sidebar({ role }: SidebarProps) {
             })}
           </ul>
 
-          {/* Logout Button */}
+          {/* Tombol Logout */}
           <div className="mt-auto border-t border-gray-200 pt-4">
             <button
               onClick={handleLogout}
