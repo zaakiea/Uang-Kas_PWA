@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-// GET: Use Case 3 (Lihat Daftar Mahasiswa)
 export async function GET() {
   const { data, error } = await supabase
     .from("users")
@@ -14,17 +13,73 @@ export async function GET() {
   return NextResponse.json(data);
 }
 
-// POST: Use Case 2 (Tambah Mahasiswa - Admin)
 export async function POST(request: Request) {
-  const body = await request.json();
+  try {
+    const body = await request.json();
+    const {
+      nim,
+      nama_lengkap,
+      fakultas,
+      prodi,
+      angkatan,
+      tanggal_lahir,
+      no_hp,
+      email,
+    } = body;
 
-  // Format password default: NIM + TglLahir (YYYYMMDD) atau sesuai input
-  const { data, error } = await supabase
-    .from("users")
-    .insert([{ ...body, role: "MAHASISWA" }]) // Paksa role jadi mahasiswa
-    .select();
+    // 1. Validasi Input Dasar
+    if (!nim || !nama_lengkap || !tanggal_lahir) {
+      return NextResponse.json(
+        { message: "Data wajib tidak lengkap" },
+        { status: 400 }
+      );
+    }
 
-  if (error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+    // 2. Generate Password: NIM + Tanggal Lahir (DDMMYYYY)
+    // Input tanggal_lahir biasanya format YYYY-MM-DD
+    const dateObj = new Date(tanggal_lahir);
+    const day = String(dateObj.getDate()).padStart(2, "0");
+    const month = String(dateObj.getMonth() + 1).padStart(2, "0"); // Month is 0-indexed
+    const year = dateObj.getFullYear();
+
+    const passwordDefault = `${nim}${day}${month}${year}`;
+
+    // 3. Insert ke Supabase
+    const { data, error } = await supabase
+      .from("users")
+      .insert([
+        {
+          nim,
+          password: passwordDefault, // Di real app, hash ini dengan bcrypt!
+          role: "MAHASISWA",
+          nama_lengkap,
+          fakultas,
+          prodi,
+          angkatan,
+          tanggal_lahir,
+          no_hp,
+          email,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      // Handle duplicate NIM
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { message: "NIM sudah terdaftar" },
+          { status: 409 }
+        );
+      }
+      throw error;
+    }
+
+    return NextResponse.json({ message: "Berhasil", data }, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json(
+      { message: error.message || "Internal Server Error" },
+      { status: 500 }
+    );
+  }
 }

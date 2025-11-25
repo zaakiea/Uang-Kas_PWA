@@ -23,7 +23,6 @@ export default function PayPage() {
     if (!userId) return;
     setLoading(true);
 
-    // Simpan data transaksi (Status PENDING)
     const { error } = await supabase.from("transaksi").insert([
       {
         user_id: userId,
@@ -31,7 +30,6 @@ export default function PayPage() {
         nominal: parseInt(formData.nominal),
         keterangan: formData.keterangan,
         status: "PENDING",
-        // bukti_bayar: ... (Implementasi upload file butuh setup bucket storage)
       },
     ]);
 
@@ -57,7 +55,8 @@ export default function PayPage() {
             <input
               type="number"
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              // PERBAIKAN: Tambahkan text-gray-900 bg-white
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 bg-white"
               value={formData.nominal}
               onChange={(e) =>
                 setFormData({ ...formData, nominal: e.target.value })
@@ -71,7 +70,8 @@ export default function PayPage() {
             <textarea
               required
               placeholder="Cth: Iuran Bulan Mei"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none"
+              // PERBAIKAN: Tambahkan text-gray-900 bg-white
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none text-gray-900 bg-white"
               value={formData.keterangan}
               onChange={(e) =>
                 setFormData({ ...formData, keterangan: e.target.value })

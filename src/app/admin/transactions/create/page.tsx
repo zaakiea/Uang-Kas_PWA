@@ -17,7 +17,6 @@ export default function CreateTransactionPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Ambil user_id dari session (Admin yang input)
     const session = JSON.parse(localStorage.getItem("user_session") || "{}");
 
     try {
@@ -27,7 +26,7 @@ export default function CreateTransactionPage() {
         body: JSON.stringify({
           ...formData,
           user_id: session.id,
-          status: "VERIFIED", // Admin input langsung Verified
+          status: "VERIFIED",
           tanggal_transaksi: new Date().toISOString(),
         }),
       });
@@ -88,7 +87,8 @@ export default function CreateTransactionPage() {
             <input
               type="number"
               required
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              // PERBAIKAN: Tambahkan text-gray-900 bg-white
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 bg-white"
               placeholder="Contoh: 50000"
               value={formData.nominal}
               onChange={(e) =>
@@ -104,7 +104,8 @@ export default function CreateTransactionPage() {
             <textarea
               required
               rows={3}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              // PERBAIKAN: Tambahkan text-gray-900 bg-white
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 bg-white"
               placeholder="Contoh: Beli perlengkapan acara..."
               value={formData.keterangan}
               onChange={(e) =>
