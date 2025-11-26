@@ -2,13 +2,13 @@
 import {
   LayoutDashboard,
   Users,
-  Wallet,
   ReceiptText,
   CheckCircle,
   User,
   History,
   Info,
   CreditCard,
+  // Wallet, <-- Hapus import Wallet jika tidak dipakai lagi
 } from "lucide-react";
 
 export type MenuItem = {
@@ -33,11 +33,7 @@ export const adminMenuItems: MenuItem[] = [
     path: "/admin/transactions",
     icon: ReceiptText,
   },
-  {
-    title: "Input Kas",
-    path: "/admin/transactions/create",
-    icon: Wallet,
-  },
+  // --- ITEM "INPUT KAS" DIHAPUS DARI SINI ---
   {
     title: "Verifikasi Setoran",
     path: "/admin/verifications",

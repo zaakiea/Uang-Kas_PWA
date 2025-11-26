@@ -2,11 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Check, X } from "lucide-react";
+import { Check, X, Search, Eye, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
+import Image from "next/image";
 
 export default function VerificationsPage() {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPendingRequests();
@@ -14,14 +18,18 @@ export default function VerificationsPage() {
 
   const fetchPendingRequests = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("transaksi")
-      .select(`*, users(nama_lengkap, nim)`)
+      .select(`*, users(nama_lengkap, nim, prodi)`)
       .eq("status", "PENDING")
-      .eq("tipe", "PEMASUKAN") // Hanya verifikasi uang masuk
+      .eq("tipe", "PEMASUKAN")
       .order("tanggal_transaksi", { ascending: true });
 
-    setRequests(data || []);
+    if (error) {
+      toast.error("Gagal memuat data: " + error.message);
+    } else {
+      setRequests(data || []);
+    }
     setLoading(false);
   };
 
@@ -29,11 +37,10 @@ export default function VerificationsPage() {
     id: number,
     status: "VERIFIED" | "REJECTED"
   ) => {
-    const confirmMsg =
-      status === "VERIFIED"
-        ? "Terima pembayaran ini?"
-        : "Tolak pembayaran ini?";
-    if (!confirm(confirmMsg)) return;
+    const actionText = status === "VERIFIED" ? "menerima" : "menolak";
+
+    // Konfirmasi sederhana
+    if (!confirm(`Yakin ingin ${actionText} setoran ini?`)) return;
 
     const { error } = await supabase
       .from("transaksi")
@@ -41,82 +48,191 @@ export default function VerificationsPage() {
       .eq("id", id);
 
     if (!error) {
-      // Refresh list
-      setRequests(requests.filter((req) => req.id !== id));
+      toast.success(`Berhasil ${actionText} setoran`);
+      // Hapus item dari list lokal agar tidak perlu fetch ulang
+      setRequests((prev) => prev.filter((req) => req.id !== id));
     } else {
-      alert("Gagal memproses: " + error.message);
+      toast.error("Gagal memproses: " + error.message);
     }
   };
 
+  // Filter pencarian
+  const filteredRequests = requests.filter(
+    (req) =>
+      req.users.nama_lengkap.toLowerCase().includes(search.toLowerCase()) ||
+      req.users.nim.includes(search)
+  );
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-800">Verifikasi Setoran</h1>
-
-      {loading ? (
-        <p>Memuat data...</p>
-      ) : requests.length === 0 ? (
-        <div className="bg-white p-8 rounded-xl text-center text-gray-500 border border-gray-100">
-          Tidak ada permintaan setoran pending saat ini.
+      {/* Header & Search */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Verifikasi Setoran
+          </h1>
+          <p className="text-sm text-gray-500">
+            {requests.length} permintaan menunggu persetujuan
+          </p>
         </div>
-      ) : (
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {requests.map((req) => (
-            <div
-              key={req.id}
-              className="bg-white p-5 rounded-xl shadow-sm border border-gray-200"
-            >
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="font-bold text-gray-900">
-                    {req.users.nama_lengkap}
-                  </h3>
-                  <p className="text-xs text-gray-500">{req.users.nim}</p>
-                </div>
-                <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded font-medium">
-                  Pending
-                </span>
-              </div>
 
-              <div className="py-3 border-t border-b border-gray-100 my-3 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Nominal</span>
-                  <span className="font-bold text-green-600">
-                    Rp {req.nominal.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Keterangan</span>
-                  <span className="text-gray-800">{req.keterangan}</span>
-                </div>
-                {req.bukti_bayar && (
-                  <div className="mt-2">
-                    <a
-                      href={req.bukti_bayar}
-                      target="_blank"
-                      className="text-xs text-blue-600 hover:underline"
+        <div className="relative w-full sm:w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Cari Nama / NIM..."
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white text-gray-900"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Table Container */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm text-gray-600">
+            <thead className="bg-gray-50 text-gray-900 font-semibold border-b border-gray-200">
+              <tr>
+                <th className="p-4 whitespace-nowrap">Tanggal</th>
+                <th className="p-4">Mahasiswa</th>
+                <th className="p-4">Nominal</th>
+                <th className="p-4">Keterangan</th>
+                <th className="p-4 text-center">Bukti</th>
+                <th className="p-4 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-gray-500">
+                    Memuat data...
+                  </td>
+                </tr>
+              ) : filteredRequests.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="p-8 text-center text-gray-500 flex flex-col items-center gap-2"
+                  >
+                    <AlertCircle className="w-8 h-8 text-gray-300" />
+                    <p>Tidak ada data yang perlu diverifikasi.</p>
+                  </td>
+                </tr>
+              ) : (
+                filteredRequests.map((req) => (
+                  <tr
+                    key={req.id}
+                    className="hover:bg-gray-50 transition-colors group"
+                  >
+                    {/* Tanggal */}
+                    <td className="p-4 whitespace-nowrap text-gray-500">
+                      {new Date(req.tanggal_transaksi).toLocaleDateString(
+                        "id-ID",
+                        {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        }
+                      )}
+                      <div className="text-xs text-gray-400">
+                        {new Date(req.tanggal_transaksi).toLocaleTimeString(
+                          "id-ID",
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Mahasiswa */}
+                    <td className="p-4">
+                      <div className="font-medium text-gray-900">
+                        {req.users.nama_lengkap}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {req.users.nim} - {req.users.prodi}
+                      </div>
+                    </td>
+
+                    {/* Nominal */}
+                    <td className="p-4 font-semibold text-green-600 whitespace-nowrap">
+                      Rp {req.nominal.toLocaleString("id-ID")}
+                    </td>
+
+                    {/* Keterangan */}
+                    <td
+                      className="p-4 max-w-xs truncate text-gray-900"
+                      title={req.keterangan}
                     >
-                      Lihat Bukti Pembayaran
-                    </a>
-                  </div>
-                )}
-              </div>
+                      {req.keterangan}
+                    </td>
 
-              <div className="flex gap-2 mt-4">
-                <button
-                  onClick={() => handleVerification(req.id, "REJECTED")}
-                  className="flex-1 flex items-center justify-center gap-2 p-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 text-sm font-medium"
-                >
-                  <X size={16} /> Tolak
-                </button>
-                <button
-                  onClick={() => handleVerification(req.id, "VERIFIED")}
-                  className="flex-1 flex items-center justify-center gap-2 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
-                >
-                  <Check size={16} /> Terima
-                </button>
-              </div>
-            </div>
-          ))}
+                    {/* Bukti Bayar (Thumbnail) */}
+                    <td className="p-4 text-center">
+                      {req.bukti_bayar ? (
+                        <button
+                          onClick={() => setSelectedImage(req.bukti_bayar)}
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-md hover:bg-blue-100 transition"
+                        >
+                          <Eye size={14} /> Lihat
+                        </button>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">
+                          Tanpa Bukti
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Aksi */}
+                    <td className="p-4 text-center">
+                      <div className="flex justify-center gap-2">
+                        <button
+                          onClick={() => handleVerification(req.id, "VERIFIED")}
+                          className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-sm hover:shadow transition-all"
+                          title="Terima"
+                        >
+                          <Check size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleVerification(req.id, "REJECTED")}
+                          className="p-2 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                          title="Tolak"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Modal Preview Gambar */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-3xl max-h-[90vh] w-full h-full flex items-center justify-center">
+            <Image
+              src={selectedImage}
+              alt="Bukti Transfer Full"
+              width={800}
+              height={800}
+              className="object-contain max-h-full rounded-lg shadow-2xl"
+            />
+            <button
+              className="absolute top-4 right-4 p-2 bg-white/20 text-white rounded-full hover:bg-white/40 transition"
+              onClick={() => setSelectedImage(null)}
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
       )}
     </div>
