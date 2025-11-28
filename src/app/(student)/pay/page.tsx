@@ -12,7 +12,6 @@ export default function PayPage() {
   const [userId, setUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // State untuk Form
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -29,23 +28,17 @@ export default function PayPage() {
     }
   }, [router]);
 
-  // Handle pemilihan file
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
-
-      // Validasi: Maksimal 2MB
       if (selectedFile.size > 2 * 1024 * 1024) {
         toast.error("Ukuran file terlalu besar (Maksimal 2MB)");
         return;
       }
-
-      // Validasi: Harus Gambar
       if (!selectedFile.type.startsWith("image/")) {
         toast.error("Mohon upload file gambar (JPG/PNG)");
         return;
       }
-
       setFile(selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
     }
@@ -58,53 +51,44 @@ export default function PayPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userId) return;
-
-    if (!file) {
-      toast.error("Wajib upload bukti pembayaran!");
+    if (!userId || !file) {
+      if (!file) toast.error("Wajib upload bukti pembayaran!");
       return;
     }
 
     setLoading(true);
 
     try {
-      // 1. Upload Gambar ke Supabase Storage
-      // Nama file unik: userId-timestamp.ext
       const fileExt = file.name.split(".").pop();
       const fileName = `${userId}-${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
 
-      // Upload ke bucket 'bukti-bayar'
       const { error: uploadError } = await supabase.storage
         .from("bukti-bayar")
-        .upload(filePath, file);
+        .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      // 2. Dapatkan Public URL gambar
       const { data: urlData } = supabase.storage
         .from("bukti-bayar")
-        .getPublicUrl(filePath);
+        .getPublicUrl(fileName);
 
-      // 3. Simpan Data Transaksi ke Database
       const { error: insertError } = await supabase.from("transaksi").insert([
         {
           user_id: userId,
           tipe: "PEMASUKAN",
           nominal: parseInt(formData.nominal),
           keterangan: formData.keterangan,
-          status: "PENDING", // Status awal pending
-          bukti_bayar: urlData.publicUrl, // Simpan URL gambar
+          status: "PENDING",
+          bukti_bayar: urlData.publicUrl,
           tanggal_transaksi: new Date().toISOString(),
         },
       ]);
 
       if (insertError) throw insertError;
 
-      toast.success("Pembayaran berhasil dikirim! Menunggu verifikasi admin.");
-      router.push("/history"); // Redirect ke halaman history
+      toast.success("Pembayaran berhasil dikirim!");
+      router.push("/history");
     } catch (error: any) {
-      console.error("Error:", error);
       toast.error(error.message || "Gagal mengirim pembayaran");
     } finally {
       setLoading(false);
@@ -112,11 +96,12 @@ export default function PayPage() {
   };
 
   return (
-    <div className="max-w-lg mx-auto pb-20">
+    // Tambahkan 'p-4' agar form tidak mepet layar
+    <div className="max-w-lg mx-auto p-4 pb-24">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Setor Uang Kas</h1>
         <p className="text-gray-500 text-sm">
-          Isi form di bawah untuk membayar iuran.
+          Upload bukti transfer Anda di sini.
         </p>
       </div>
 
@@ -136,7 +121,7 @@ export default function PayPage() {
                 required
                 min="1000"
                 placeholder="50.000"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-900 text-lg font-semibold placeholder:font-normal"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-900 text-lg font-semibold placeholder:font-normal placeholder:text-gray-400"
                 value={formData.nominal}
                 onChange={(e) =>
                   setFormData({ ...formData, nominal: e.target.value })
@@ -153,7 +138,7 @@ export default function PayPage() {
             <textarea
               required
               placeholder="Contoh: Iuran Kas Bulan November 2025"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none bg-white text-gray-900"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none bg-white text-gray-900 placeholder:text-gray-400"
               value={formData.keterangan}
               onChange={(e) =>
                 setFormData({ ...formData, keterangan: e.target.value })
@@ -168,13 +153,13 @@ export default function PayPage() {
             </label>
 
             {!previewUrl ? (
-              <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors group">
+              <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors group bg-white">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   <div className="p-3 bg-blue-50 rounded-full mb-3 group-hover:bg-blue-100 transition-colors">
                     <UploadCloud className="w-6 h-6 text-blue-600" />
                   </div>
-                  <p className="mb-1 text-sm text-gray-700 font-medium">
-                    Klik untuk upload gambar
+                  <p className="mb-1 text-sm text-gray-700 font-medium text-center">
+                    Tap untuk upload gambar
                   </p>
                   <p className="text-xs text-gray-500">PNG, JPG (Max. 2MB)</p>
                 </div>
@@ -204,9 +189,7 @@ export default function PayPage() {
                 </div>
                 <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
                   <ImageIcon size={12} />
-                  {file?.name.length! > 20
-                    ? file?.name.substring(0, 20) + "..."
-                    : file?.name}
+                  <span className="truncate max-w-[100px]">{file?.name}</span>
                 </div>
               </div>
             )}

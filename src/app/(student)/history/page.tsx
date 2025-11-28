@@ -31,7 +31,6 @@ export default function HistoryPage() {
     setLoading(false);
   };
 
-  // Filter logika sederhana (bisa dikembangkan)
   const filteredTransactions = transactions.filter(
     (t) =>
       t.keterangan.toLowerCase().includes(filter.toLowerCase()) ||
@@ -45,7 +44,7 @@ export default function HistoryPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Riwayat Kas Saya</h1>
           <p className="text-sm text-gray-500">
-            Daftar semua riwayat kas Anda.
+            Daftar semua transaksi masuk dan keluar Anda.
           </p>
         </div>
 
@@ -61,17 +60,23 @@ export default function HistoryPage() {
         </div>
       </div>
 
-      {/* Tabel Container */}
+      {/* TABEL RESPONSIF */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[600px]">
             <thead>
               <tr className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider border-b border-gray-100">
-                <th className="p-4 font-semibold">Tanggal</th>
-                <th className="p-4 font-semibold">Keterangan</th>
-                <th className="p-4 font-semibold text-right">Nominal</th>
-                <th className="p-4 font-semibold text-center">Status</th>
-                <th className="p-4 font-semibold text-center">Aksi</th>
+                <th className="p-4 font-semibold whitespace-nowrap">Tanggal</th>
+                <th className="p-4 font-semibold min-w-[200px]">Keterangan</th>
+                <th className="p-4 font-semibold text-right whitespace-nowrap">
+                  Nominal
+                </th>
+                <th className="p-4 font-semibold text-center whitespace-nowrap">
+                  Status
+                </th>
+                <th className="p-4 font-semibold text-center whitespace-nowrap">
+                  Aksi
+                </th>
               </tr>
             </thead>
             <tbody className="text-sm divide-y divide-gray-50">
@@ -110,7 +115,10 @@ export default function HistoryPage() {
                     </td>
 
                     {/* Keterangan */}
-                    <td className="p-4 font-medium text-gray-900 max-w-xs truncate">
+                    <td
+                      className="p-4 font-medium text-gray-900 max-w-xs truncate"
+                      title={trx.keterangan}
+                    >
                       {trx.keterangan}
                     </td>
 
@@ -163,11 +171,15 @@ export default function HistoryPage() {
         </div>
       </div>
 
-      {/* Modal Dialog Detail */}
       <TransactionDetailDialog
         transaction={selectedTransaction}
         onClose={() => setSelectedTransaction(null)}
       />
+
+      {/* Footer Info Mobile */}
+      <p className="sm:hidden text-xs text-center text-gray-400 mt-2">
+        Geser tabel ke kiri/kanan untuk melihat detail &rarr;
+      </p>
     </div>
   );
 }

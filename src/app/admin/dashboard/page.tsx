@@ -9,7 +9,7 @@ import {
   Users,
   ArrowRight,
 } from "lucide-react";
-import TransactionChart from "@/components/admin/TransactionChart"; // Pastikan komponen ini ada
+import TransactionChart from "@/components/admin/TransactionChart";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -49,7 +49,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-10">
-      {/* Header */}
+      {/* Header Responsif */}
       <header className="bg-white border-b border-gray-200 px-6 py-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sticky top-0 z-20">
         <div>
           <h1 className="font-bold text-2xl text-gray-800">Dashboard</h1>
@@ -59,31 +59,31 @@ export default function AdminDashboard() {
           <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
             {user.nama_lengkap?.charAt(0)}
           </div>
-          <span className="text-sm font-medium text-gray-700 pr-2">
+          <span className="text-sm font-medium text-gray-700 pr-2 hidden sm:block">
             {user.nama_lengkap}
           </span>
         </div>
       </header>
 
       <main className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
-        {/* --- GRID RESPONSIF (KPI CARDS) --- */}
-        {/* Mobile: 1 Kolom, Tablet: 2 Kolom, Desktop: 3 Kolom */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-          {/* Saldo */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+        {/* --- GRID STATISTIK RESPONSIF --- */}
+        {/* Mobile: 1 Kolom (Stack), Tablet/Desktop: 3 Kolom */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+          {/* Card Saldo */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition-shadow">
             <div className="p-3 bg-blue-50 text-blue-600 rounded-xl shadow-sm">
               <Wallet size={28} />
             </div>
             <div>
               <p className="text-gray-500 text-sm font-medium">Saldo Kas</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-gray-900 break-words">
                 Rp {stats.saldo.toLocaleString("id-ID")}
               </p>
             </div>
           </div>
 
-          {/* Pemasukan */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+          {/* Card Pemasukan */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition-shadow">
             <div className="p-3 bg-green-50 text-green-600 rounded-xl shadow-sm">
               <TrendingUp size={28} />
             </div>
@@ -91,14 +91,14 @@ export default function AdminDashboard() {
               <p className="text-gray-500 text-sm font-medium">
                 Total Pemasukan
               </p>
-              <p className="text-xl lg:text-2xl font-bold text-green-600">
+              <p className="text-xl lg:text-2xl font-bold text-green-600 break-words">
                 + Rp {stats.pemasukan.toLocaleString("id-ID")}
               </p>
             </div>
           </div>
 
-          {/* Pengeluaran */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 sm:col-span-2 lg:col-span-1">
+          {/* Card Pengeluaran */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition-shadow">
             <div className="p-3 bg-red-50 text-red-600 rounded-xl shadow-sm">
               <TrendingDown size={28} />
             </div>
@@ -106,21 +106,22 @@ export default function AdminDashboard() {
               <p className="text-gray-500 text-sm font-medium">
                 Total Pengeluaran
               </p>
-              <p className="text-xl lg:text-2xl font-bold text-red-600">
+              <p className="text-xl lg:text-2xl font-bold text-red-600 break-words">
                 - Rp {stats.pengeluaran.toLocaleString("id-ID")}
               </p>
             </div>
           </div>
         </div>
 
-        {/* --- GRID GRAFIK & WIDGET --- */}
+        {/* --- GRID GRAFIK & SIDEBAR --- */}
+        {/* Mobile: Stack (1 kolom), Desktop: Grafik 2/3, Sidebar 1/3 */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Grafik Utama (Mengambil 2 kolom di desktop) */}
-          <div className="lg:col-span-2 bg-white p-1 rounded-xl shadow-sm border border-gray-100">
+          {/* Grafik Utama */}
+          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <TransactionChart />
           </div>
 
-          {/* Sidebar Kecil / Menu Cepat (1 kolom di desktop) */}
+          {/* Menu Cepat (Sidebar Kanan) */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
             <h3 className="font-bold text-gray-800 mb-4 text-lg">
               Akses Cepat

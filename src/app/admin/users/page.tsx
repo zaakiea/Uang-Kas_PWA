@@ -38,7 +38,6 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header Responsif */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Data Mahasiswa</h1>
@@ -56,36 +55,33 @@ export default function AdminUsersPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          {/* Komponen Dialog Tambah */}
           <AddStudentDialog onSuccess={fetchUsers} />
         </div>
       </div>
 
-      {/* --- TABEL RESPONSIF --- */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        {/* KUNCI RESPONSIVITAS: Wrapper Scroll Horizontal */}
+        {/* WRAPPER SCROLL HORIZONTAL */}
         <div className="overflow-x-auto">
-          {/* min-w-[800px] memaksa tabel tetap lebar meskipun layar kecil */}
           <table className="w-full text-left text-sm text-gray-600 min-w-[800px]">
-            <thead className="bg-gray-50 text-gray-900 font-semibold border-b border-gray-200 uppercase text-xs tracking-wider">
+            <thead className="bg-gray-50 text-gray-900 font-semibold border-b border-gray-200">
               <tr>
                 <th className="p-4 whitespace-nowrap">NIM</th>
                 <th className="p-4 whitespace-nowrap">Nama Lengkap</th>
                 <th className="p-4 whitespace-nowrap">Prodi</th>
                 <th className="p-4 whitespace-nowrap">Angkatan</th>
-                <th className="p-4 whitespace-nowrap text-center">Aksi</th>
+                <th className="p-4 text-center whitespace-nowrap">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-gray-500">
+                  <td colSpan={5} className="p-8 text-center">
                     Memuat data...
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-gray-500">
+                  <td colSpan={5} className="p-8 text-center">
                     Tidak ada data ditemukan
                   </td>
                 </tr>
@@ -93,16 +89,15 @@ export default function AdminUsersPage() {
                 filteredUsers.map((user) => (
                   <tr
                     key={user.id}
-                    className="hover:bg-gray-50 transition-colors group"
+                    className="hover:bg-gray-50 transition-colors"
                   >
-                    <td className="p-4 font-mono text-gray-500">{user.nim}</td>
+                    <td className="p-4">{user.nim}</td>
                     <td className="p-4 font-medium text-gray-900">
                       {user.nama_lengkap}
                     </td>
                     <td className="p-4">{user.prodi}</td>
                     <td className="p-4">{user.angkatan}</td>
                     <td className="p-4 flex justify-center gap-2">
-                      {/* Komponen Aksi */}
                       <EditStudentDialog user={user} onSuccess={fetchUsers} />
                       <DeleteStudentAlert user={user} onSuccess={fetchUsers} />
                     </td>
@@ -114,9 +109,9 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Info Footer untuk Mobile */}
-      <p className="text-xs text-gray-400 text-center sm:hidden mt-2">
-        Geser tabel ke samping untuk melihat data lainnya →
+      {/* Petunjuk Scroll di Mobile */}
+      <p className="sm:hidden text-xs text-center text-gray-400 mt-2">
+        Geser ke samping untuk melihat opsi lainnya &rarr;
       </p>
     </div>
   );

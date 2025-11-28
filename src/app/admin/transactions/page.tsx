@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { ArrowDownCircle, ArrowUpCircle, Eye } from "lucide-react"; // Import Eye icon
+import { ArrowDownCircle, ArrowUpCircle, Eye } from "lucide-react";
 import AddTransactionDialog from "@/components/admin/AddTransactionDialog";
-// Kita gunakan ulang komponen detail dari folder student karena fungsinya sama persis
 import TransactionDetailDialog from "@/components/student/TransactionDetailDialog";
 
 export default function AdminTransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTransaction, setSelectedTransaction] = useState<any>(null); // State untuk dialog detail
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
 
   useEffect(() => {
     fetchTransactions();
@@ -20,12 +19,7 @@ export default function AdminTransactionsPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("transaksi")
-      .select(
-        `
-        *,
-        users (nama_lengkap)
-      `
-      )
+      .select(`*, users (nama_lengkap)`)
       .order("tanggal_transaksi", { ascending: false });
 
     if (!error) setTransactions(data || []);
@@ -42,24 +36,24 @@ export default function AdminTransactionsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 className="text-2xl font-bold text-gray-800">Riwayat Transaksi</h1>
         <AddTransactionDialog onSuccess={fetchTransactions} />
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* WRAPPER SCROLL HORIZONTAL */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-600">
+          <table className="w-full text-left text-sm text-gray-600 min-w-[900px]">
             <thead className="bg-gray-50 border-b border-gray-200 font-semibold text-gray-900">
               <tr>
-                <th className="p-4">Tanggal</th>
-                <th className="p-4">Nama</th>
-                <th className="p-4">Keterangan</th>
-                <th className="p-4">Tipe</th>
-                <th className="p-4">Status</th>
-                <th className="p-4 text-right">Nominal</th>
-                <th className="p-4 text-center">Aksi</th> {/* Kolom Baru */}
+                <th className="p-4 whitespace-nowrap">Tanggal</th>
+                <th className="p-4 whitespace-nowrap">Nama</th>
+                <th className="p-4 min-w-[200px]">Keterangan</th>
+                <th className="p-4 whitespace-nowrap">Tipe</th>
+                <th className="p-4 whitespace-nowrap">Status</th>
+                <th className="p-4 text-right whitespace-nowrap">Nominal</th>
+                <th className="p-4 text-center whitespace-nowrap">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -84,7 +78,7 @@ export default function AdminTransactionsPage() {
                     <td className="p-4 whitespace-nowrap">
                       {formatDate(trx.tanggal_transaksi)}
                     </td>
-                    <td className="p-4 font-medium text-gray-900">
+                    <td className="p-4 font-medium text-gray-900 whitespace-nowrap">
                       {trx.users?.nama_lengkap || "-"}
                     </td>
                     <td
@@ -93,7 +87,7 @@ export default function AdminTransactionsPage() {
                     >
                       {trx.keterangan}
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap">
                       {trx.tipe === "PEMASUKAN" ? (
                         <span className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded text-xs w-fit font-medium">
                           <ArrowUpCircle className="w-3 h-3" /> Masuk
@@ -104,7 +98,7 @@ export default function AdminTransactionsPage() {
                         </span>
                       )}
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap">
                       <span
                         className={`px-2 py-1 rounded text-xs font-medium ${
                           trx.status === "VERIFIED"
@@ -127,13 +121,10 @@ export default function AdminTransactionsPage() {
                       {trx.tipe === "PENGELUARAN" ? "- " : "+ "}
                       Rp {trx.nominal.toLocaleString("id-ID")}
                     </td>
-
-                    {/* Tombol Aksi Lihat Detail */}
-                    <td className="p-4 text-center">
+                    <td className="p-4 text-center whitespace-nowrap">
                       <button
                         onClick={() => setSelectedTransaction(trx)}
                         className="p-2 text-gray-500 hover:bg-gray-100 hover:text-blue-600 rounded-lg transition-colors"
-                        title="Lihat Detail"
                       >
                         <Eye size={18} />
                       </button>
@@ -146,7 +137,6 @@ export default function AdminTransactionsPage() {
         </div>
       </div>
 
-      {/* Render Dialog Detail */}
       <TransactionDetailDialog
         transaction={selectedTransaction}
         onClose={() => setSelectedTransaction(null)}

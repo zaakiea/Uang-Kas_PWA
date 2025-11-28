@@ -12,7 +12,6 @@ export default function VerificationsPage() {
   const [search, setSearch] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // State untuk Dialog Penolakan
   const [rejectDialog, setRejectDialog] = useState<{
     isOpen: boolean;
     id: number | null;
@@ -35,7 +34,7 @@ export default function VerificationsPage() {
       .order("tanggal_transaksi", { ascending: true });
 
     if (error) {
-      toast.error("Gagal memuat data: " + error.message);
+      toast.error("Gagal memuat data");
     } else {
       setRequests(data || []);
     }
@@ -58,32 +57,25 @@ export default function VerificationsPage() {
     }
   };
 
-  // Membuka dialog tolak
   const openRejectDialog = (id: number, currentKeterangan: string) => {
     setRejectDialog({
       isOpen: true,
       id,
       originalKeterangan: currentKeterangan,
     });
-    setRejectReason(""); // Reset alasan
+    setRejectReason("");
   };
 
-  // Submit penolakan
   const submitRejection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!rejectDialog.id) return;
 
     setIsRejecting(true);
-
-    // Format keterangan baru: "Keterangan Asli [DITOLAK: Alasan]"
     const newKeterangan = `${rejectDialog.originalKeterangan} [DITOLAK: ${rejectReason}]`;
 
     const { error } = await supabase
       .from("transaksi")
-      .update({
-        status: "REJECTED",
-        keterangan: newKeterangan,
-      })
+      .update({ status: "REJECTED", keterangan: newKeterangan })
       .eq("id", rejectDialog.id);
 
     if (!error) {
@@ -93,7 +85,6 @@ export default function VerificationsPage() {
     } else {
       toast.error("Gagal menolak: " + error.message);
     }
-
     setIsRejecting(false);
   };
 
@@ -128,16 +119,17 @@ export default function VerificationsPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        {/* WRAPPER SCROLL HORIZONTAL */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-600">
+          <table className="w-full text-left text-sm text-gray-600 min-w-[900px]">
             <thead className="bg-gray-50 text-gray-900 font-semibold border-b border-gray-200">
               <tr>
                 <th className="p-4 whitespace-nowrap">Tanggal</th>
-                <th className="p-4">Mahasiswa</th>
-                <th className="p-4">Nominal</th>
-                <th className="p-4">Keterangan</th>
-                <th className="p-4 text-center">Bukti</th>
-                <th className="p-4 text-center">Aksi</th>
+                <th className="p-4 whitespace-nowrap">Mahasiswa</th>
+                <th className="p-4 whitespace-nowrap text-right">Nominal</th>
+                <th className="p-4 min-w-[200px]">Keterangan</th>
+                <th className="p-4 text-center whitespace-nowrap">Bukti</th>
+                <th className="p-4 text-center whitespace-nowrap">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -154,7 +146,7 @@ export default function VerificationsPage() {
                     className="p-8 text-center text-gray-500 flex flex-col items-center gap-2"
                   >
                     <AlertCircle className="w-8 h-8 text-gray-300" />
-                    <p>Tidak ada data yang perlu diverifikasi.</p>
+                    <p>Tidak ada data pending.</p>
                   </td>
                 </tr>
               ) : (
@@ -173,7 +165,7 @@ export default function VerificationsPage() {
                         }
                       )}
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap">
                       <div className="font-medium text-gray-900">
                         {req.users.nama_lengkap}
                       </div>
@@ -181,13 +173,13 @@ export default function VerificationsPage() {
                         {req.users.nim}
                       </div>
                     </td>
-                    <td className="p-4 font-semibold text-green-600 whitespace-nowrap">
+                    <td className="p-4 font-semibold text-green-600 text-right whitespace-nowrap">
                       Rp {req.nominal.toLocaleString("id-ID")}
                     </td>
                     <td className="p-4 max-w-xs truncate text-gray-900">
                       {req.keterangan}
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="p-4 text-center whitespace-nowrap">
                       {req.bukti_bayar ? (
                         <button
                           onClick={() => setSelectedImage(req.bukti_bayar)}
@@ -201,7 +193,7 @@ export default function VerificationsPage() {
                         </span>
                       )}
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="p-4 text-center whitespace-nowrap">
                       <div className="flex justify-center gap-2">
                         <button
                           onClick={() => handleApprove(req.id)}
@@ -229,28 +221,26 @@ export default function VerificationsPage() {
         </div>
       </div>
 
-      {/* Modal Preview Gambar */}
       {selectedImage && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
           onClick={() => setSelectedImage(null)}
         >
-          <div className="relative max-w-3xl max-h-[90vh]">
+          <div className="relative max-w-3xl max-h-[90vh] w-full">
             <Image
               src={selectedImage}
               alt="Bukti"
               width={800}
               height={800}
-              className="object-contain max-h-full rounded-lg"
+              className="object-contain w-full h-full rounded-lg"
             />
-            <button className="absolute top-2 right-2 p-2 bg-white/20 text-white rounded-full">
+            <button className="absolute top-2 right-2 p-2 bg-white/20 text-white rounded-full hover:bg-white/40">
               <X size={24} />
             </button>
           </div>
         </div>
       )}
 
-      {/* Modal Tolak dengan Alasan */}
       {rejectDialog.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
@@ -258,20 +248,17 @@ export default function VerificationsPage() {
               Tolak Pembayaran
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Silakan masukkan alasan mengapa pembayaran ini ditolak. Alasan ini
-              akan muncul di riwayat mahasiswa.
+              Masukkan alasan penolakan.
             </p>
-
             <form onSubmit={submitRejection}>
               <textarea
                 required
                 autoFocus
-                placeholder="Contoh: Bukti transfer tidak terbaca, Nominal tidak sesuai..."
+                placeholder="Alasan..."
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm bg-white text-gray-900 h-32 resize-none"
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
               />
-
               <div className="flex justify-end gap-3 mt-4">
                 <button
                   type="button"
@@ -290,7 +277,7 @@ export default function VerificationsPage() {
                   {isRejecting && (
                     <Loader2 size={16} className="animate-spin" />
                   )}
-                  Tolak Sekarang
+                  Tolak
                 </button>
               </div>
             </form>
