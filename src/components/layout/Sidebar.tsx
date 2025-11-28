@@ -1,4 +1,3 @@
-// src/components/layout/Sidebar.tsx
 "use client";
 
 import Link from "next/link";
@@ -9,7 +8,6 @@ import { useState, useEffect } from "react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-// Helper function untuk class names
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
@@ -21,110 +19,107 @@ interface SidebarProps {
 export default function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
 
-  // Pilih menu berdasarkan role
   const menuItems = role === "ADMIN" ? adminMenuItems : studentMenuItems;
 
-  // Handle responsive check
+  // Tutup sidebar otomatis saat pindah halaman (UX Mobile)
   useEffect(() => {
-    const checkMobile = () => {
-      const isSmallScreen = window.innerWidth < 1024;
-      setIsMobile(isSmallScreen);
-      if (!isSmallScreen) {
-        setIsOpen(true); // Buka sidebar otomatis di desktop
-      } else {
-        setIsOpen(false); // Tutup di mobile
-      }
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+    setIsOpen(false);
+  }, [pathname]);
 
   const handleLogout = () => {
-    // Logika logout sederhana
     localStorage.removeItem("user_session");
     window.location.href = "/login";
   };
 
   return (
     <>
-      {/* Tombol Toggle untuk Mobile (Hanya muncul di layar kecil) */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow-md lg:hidden text-gray-700"
-      >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
+      {/* --- MOBILE HEADER (Hanya muncul di HP) --- */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm h-14">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
+            K
+          </div>
+          <span className="font-bold text-gray-900">Uang Kas</span>
+        </div>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="p-2 text-gray-600 hover:bg-gray-100 rounded-md active:scale-95 transition-transform"
+        >
+          <Menu size={24} />
+        </button>
+      </div>
 
-      {/* Overlay Gelap untuk Mobile */}
-      {isMobile && isOpen && (
+      {/* --- OVERLAY BACKGROUND (Hanya muncul di HP saat menu terbuka) --- */}
+      {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300 backdrop-blur-sm"
           onClick={() => setIsOpen(false)}
         />
       )}
 
-      {/* Container Sidebar */}
+      {/* --- SIDEBAR CONTAINER --- */}
       <aside
         className={cn(
-          "fixed top-0 left-0 z-40 h-screen w-64 bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out",
-          isOpen ? "translate-x-0" : "-translate-x-full",
-          "lg:translate-x-0 lg:static" // Reset transform agar static di desktop
+          "fixed top-0 left-0 z-50 h-screen w-64 bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out lg:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex flex-col h-full px-3 py-4 overflow-y-auto">
-          {/* Logo Header */}
-          <div className="flex items-center justify-center mb-10 mt-2">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mr-3">
-              K
+        <div className="flex flex-col h-full">
+          {/* Header Sidebar (Desktop) & Tombol Close (Mobile) */}
+          <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100">
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold mr-3">
+                K
+              </div>
+              <span className="text-xl font-bold text-gray-900">Uang Kas</span>
             </div>
-            <span className="self-center text-xl font-bold whitespace-nowrap text-gray-900">
-              Uang Kas
-            </span>
+            {/* Tombol Close khusus Mobile */}
+            <button
+              onClick={() => setIsOpen(false)}
+              className="lg:hidden p-1 text-gray-500 hover:bg-gray-100 rounded-md"
+            >
+              <X size={24} />
+            </button>
           </div>
 
-          {/* Daftar Menu */}
-          <ul className="space-y-2 font-medium flex-1">
+          {/* Menu Items (Scrollable) */}
+          <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1 scrollbar-thin scrollbar-thumb-gray-200">
             {menuItems.map((item, index) => {
               const isActive = pathname === item.path;
               return (
-                <li key={index}>
-                  <Link
-                    href={item.path}
-                    onClick={() => isMobile && setIsOpen(false)}
+                <Link
+                  key={index}
+                  href={item.path}
+                  className={cn(
+                    "flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
+                    isActive
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  )}
+                >
+                  <item.icon
                     className={cn(
-                      "flex items-center p-3 rounded-lg group transition-colors duration-200",
+                      "w-5 h-5 mr-3 transition-colors",
                       isActive
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-gray-900 hover:bg-gray-100"
+                        ? "text-blue-600"
+                        : "text-gray-400 group-hover:text-gray-600"
                     )}
-                  >
-                    <item.icon
-                      className={cn(
-                        "w-5 h-5 transition duration-75",
-                        isActive
-                          ? "text-blue-600"
-                          : "text-gray-500 group-hover:text-gray-900"
-                      )}
-                    />
-                    <span className="ms-3">{item.title}</span>
-                  </Link>
-                </li>
+                  />
+                  {item.title}
+                </Link>
               );
             })}
-          </ul>
+          </div>
 
-          {/* Tombol Logout */}
-          <div className="mt-auto border-t border-gray-200 pt-4">
+          {/* Footer / Logout */}
+          <div className="p-4 border-t border-gray-100">
             <button
               onClick={handleLogout}
-              className="flex items-center w-full p-3 text-gray-900 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors group"
+              className="flex items-center w-full px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors group"
             >
-              <LogOut className="w-5 h-5 text-gray-500 group-hover:text-red-600 transition duration-75" />
-              <span className="ms-3">Keluar</span>
+              <LogOut className="w-5 h-5 mr-3 group-hover:text-red-700" />
+              Keluar
             </button>
           </div>
         </div>
