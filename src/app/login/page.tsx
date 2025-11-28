@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image"; // Import Image
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,9 +45,18 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
-        <div className="text-center mb-8">
-          {/* Tambahkan text-gray-900 agar judul tetap hitam di dark mode */}
-          <h1 className="text-2xl font-bold text-gray-900">Uang Kas Digital</h1>
+        {/* Logo & Title */}
+        <div className="text-center mb-8 flex flex-col items-center">
+          <div className="relative w-20 h-20 mb-4">
+            <Image
+              src="/logo.webp"
+              alt="DigiKas Logo"
+              fill
+              className="object-contain rounded-xl"
+              priority
+            />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">DigiKas</h1>
           <p className="text-gray-500 text-sm mt-2">Masuk untuk melanjutkan</p>
         </div>
 
@@ -64,9 +74,8 @@ export default function LoginPage() {
             <input
               type="text"
               required
-              // PERBAIKAN: Tambahkan 'text-gray-900' di sini
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-gray-900 bg-white"
-              placeholder="NIM"
+              placeholder="Contoh: 221060500XX"
               value={formData.nim}
               onChange={(e) =>
                 setFormData({ ...formData, nim: e.target.value })
@@ -81,15 +90,16 @@ export default function LoginPage() {
             <input
               type="password"
               required
-              // PERBAIKAN: Tambahkan 'text-gray-900' di sini juga
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-gray-900 bg-white"
-              placeholder="Masukkan Kata Sandi
-            "
+              placeholder="NIM + Tanggal Lahir (DDMMYYYY)"
               value={formData.password}
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
               }
             />
+            <p className="text-xs text-gray-400 mt-1">
+              Format: NIM + Tgl Lahir (cth: 221060..01012002)
+            </p>
           </div>
 
           <button

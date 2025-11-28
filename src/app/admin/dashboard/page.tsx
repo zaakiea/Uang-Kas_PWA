@@ -33,7 +33,6 @@ export default function AdminDashboard() {
     }
     setUser(userData);
 
-    // Fetch Stats Ringkasan
     fetch("/api/dashboard")
       .then((res) => res.json())
       .then((data) => {
@@ -49,11 +48,10 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-10">
-      {/* Header Responsif */}
       <header className="bg-white border-b border-gray-200 px-6 py-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sticky top-0 z-20">
         <div>
           <h1 className="font-bold text-2xl text-gray-800">Dashboard</h1>
-          <p className="text-sm text-gray-500">Ringkasan keuangan angkatan</p>
+          <p className="text-sm text-gray-500">Ringkasan keuangan</p>
         </div>
         <div className="flex items-center gap-3 bg-gray-100 px-3 py-1.5 rounded-full">
           <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
@@ -66,10 +64,7 @@ export default function AdminDashboard() {
       </header>
 
       <main className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
-        {/* --- GRID STATISTIK RESPONSIF --- */}
-        {/* Mobile: 1 Kolom (Stack), Tablet/Desktop: 3 Kolom */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-          {/* Card Saldo */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition-shadow">
             <div className="p-3 bg-blue-50 text-blue-600 rounded-xl shadow-sm">
               <Wallet size={28} />
@@ -82,7 +77,6 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Card Pemasukan */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition-shadow">
             <div className="p-3 bg-green-50 text-green-600 rounded-xl shadow-sm">
               <TrendingUp size={28} />
@@ -97,7 +91,6 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Card Pengeluaran */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition-shadow">
             <div className="p-3 bg-red-50 text-red-600 rounded-xl shadow-sm">
               <TrendingDown size={28} />
@@ -113,15 +106,11 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* --- GRID GRAFIK & SIDEBAR --- */}
-        {/* Mobile: Stack (1 kolom), Desktop: Grafik 2/3, Sidebar 1/3 */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Grafik Utama */}
           <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <TransactionChart />
           </div>
 
-          {/* Menu Cepat (Sidebar Kanan) */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
             <h3 className="font-bold text-gray-800 mb-4 text-lg">
               Akses Cepat

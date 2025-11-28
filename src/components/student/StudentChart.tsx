@@ -31,7 +31,7 @@ export default function StudentChart({ data, loading }: StudentChartProps) {
       <div className="mb-6">
         <h3 className="text-lg font-bold text-gray-800">Statistik Bulanan</h3>
         <p className="text-sm text-gray-500">
-          Pantau setoranmu vs pengeluaran angkatan tahun ini
+          Pantau setoranmu vs pengeluaran tahun ini
         </p>
       </div>
 
@@ -39,12 +39,7 @@ export default function StudentChart({ data, loading }: StudentChartProps) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
-            margin={{
-              top: 10,
-              right: 10,
-              left: -20,
-              bottom: 0,
-            }}
+            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
           >
             <CartesianGrid
               strokeDasharray="3 3"
@@ -78,20 +73,20 @@ export default function StudentChart({ data, loading }: StudentChartProps) {
             />
             <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />
 
-            {/* Bar Pengeluaran Angkatan */}
+            {/* Bar Pengeluaran */}
             <Bar
-              name="Pengeluaran Angkatan"
+              name="Pengeluaran Total"
               dataKey="pengeluaran_angkatan"
               fill="#ef4444" // Merah
               radius={[4, 4, 0, 0]}
               barSize={20}
             />
 
-            {/* Bar Pemasukan Angkatan (Total) */}
+            {/* Bar Pemasukan Total */}
             <Bar
-              name="Total Masuk Angkatan"
+              name="Total Pemasukan"
               dataKey="pemasukan_angkatan"
-              fill="#e5e7eb" // Abu-abu (sebagai pembanding)
+              fill="#e5e7eb" // Abu-abu
               radius={[4, 4, 0, 0]}
               barSize={20}
             />

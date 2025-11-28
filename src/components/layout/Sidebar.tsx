@@ -7,6 +7,7 @@ import { LogOut, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import Image from "next/image"; // Import Image dari Next.js
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -22,12 +23,10 @@ export default function Sidebar({ role }: SidebarProps) {
 
   const menuItems = role === "ADMIN" ? adminMenuItems : studentMenuItems;
 
-  // Tutup sidebar otomatis saat pindah halaman (UX Mobile)
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
 
-  // Cegah scroll body saat sidebar terbuka di mobile
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -43,25 +42,29 @@ export default function Sidebar({ role }: SidebarProps) {
 
   return (
     <>
-      {/* --- MOBILE HEADER (Hanya muncul di HP) --- */}
+      {/* --- MOBILE HEADER --- */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm h-16 transition-all duration-300">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
-            K
+          {/* Logo Mobile */}
+          <div className="relative w-8 h-8">
+            <Image
+              src="/logo.webp"
+              alt="DigiKas Logo"
+              fill
+              className="object-contain rounded-md"
+            />
           </div>
-          <span className="font-bold text-gray-900 text-lg">Uang Kas</span>
+          <span className="font-bold text-gray-900 text-lg">DigiKas</span>
         </div>
         <button
           onClick={() => setIsOpen(true)}
           className="p-2 text-gray-600 hover:bg-gray-100 rounded-md active:scale-95 transition-transform"
-          aria-label="Open Menu"
         >
           <Menu size={24} />
         </button>
       </div>
 
-      {/* --- OVERLAY BACKGROUND (Mobile Only) --- */}
-      {/* Muncul saat sidebar terbuka untuk menggelapkan konten belakang */}
+      {/* --- OVERLAY BACKGROUND --- */}
       <div
         className={cn(
           "fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300 backdrop-blur-sm",
@@ -80,15 +83,20 @@ export default function Sidebar({ role }: SidebarProps) {
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Header Sidebar (Desktop) & Tombol Close (Mobile) */}
+          {/* Header Sidebar Desktop */}
           <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100 shrink-0">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold mr-3">
-                K
+            <div className="flex items-center gap-3">
+              {/* Logo Desktop */}
+              <div className="relative w-8 h-8">
+                <Image
+                  src="/logo.webp"
+                  alt="DigiKas Logo"
+                  fill
+                  className="object-contain rounded-md"
+                />
               </div>
-              <span className="text-xl font-bold text-gray-900">Uang Kas</span>
+              <span className="text-xl font-bold text-gray-900">DigiKas</span>
             </div>
-            {/* Tombol Close khusus Mobile */}
             <button
               onClick={() => setIsOpen(false)}
               className="lg:hidden p-1 text-gray-500 hover:bg-gray-100 rounded-md transition-colors"
@@ -97,7 +105,7 @@ export default function Sidebar({ role }: SidebarProps) {
             </button>
           </div>
 
-          {/* Menu Items (Scrollable) */}
+          {/* Menu Items */}
           <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1 scrollbar-thin scrollbar-thumb-gray-200">
             {menuItems.map((item, index) => {
               const isActive = pathname === item.path;
@@ -126,7 +134,7 @@ export default function Sidebar({ role }: SidebarProps) {
             })}
           </div>
 
-          {/* Footer / Logout */}
+          {/* Footer */}
           <div className="p-4 border-t border-gray-100 shrink-0 bg-white">
             <button
               onClick={handleLogout}

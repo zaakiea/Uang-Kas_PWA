@@ -25,7 +25,6 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Cek Sesi
     const session = localStorage.getItem("user_session");
     if (!session) {
       router.push("/login");
@@ -33,14 +32,12 @@ export default function StudentDashboard() {
     }
     const userData = JSON.parse(session);
 
-    // Proteksi Role
     if (userData.role === "ADMIN") {
       router.push("/admin/dashboard");
       return;
     }
     setUser(userData);
 
-    // 2. Ambil Data Dashboard dari API
     const fetchDashboardData = async () => {
       try {
         const res = await fetch(
@@ -66,7 +63,6 @@ export default function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header Welcome Responsif */}
       <div className="bg-blue-600 px-6 pt-8 pb-24 rounded-b-[2.5rem] shadow-lg text-white relative z-10">
         <div className="max-w-7xl mx-auto flex justify-between items-center mb-4">
           <div>
@@ -83,14 +79,12 @@ export default function StudentDashboard() {
       </div>
 
       <div className="px-4 lg:px-8 -mt-20 relative z-20 space-y-6 max-w-7xl mx-auto">
-        {/* --- GRID STATISTIK RESPONSIF --- */}
-        {/* Mobile: 1 Kolom (Stack), Desktop: 3 Kolom Sejajar */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Card 1: Saldo Kas Angkatan */}
+          {/* Card 1: Total Saldo Kas (Sudah diganti) */}
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition">
             <div>
               <p className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-1">
-                Total Kas Angkatan
+                Total Saldo Kas
               </p>
               <h2 className="text-2xl font-bold text-gray-900">
                 Rp {stats.saldo_angkatan.toLocaleString("id-ID")}
@@ -101,7 +95,6 @@ export default function StudentDashboard() {
             </div>
           </div>
 
-          {/* Card 2: Pengeluaran */}
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition">
             <div>
               <p className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-1">
@@ -116,7 +109,6 @@ export default function StudentDashboard() {
             </div>
           </div>
 
-          {/* Card 3: Uang Saya */}
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition">
             <div>
               <p className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-1">
@@ -132,12 +124,10 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* Grafik */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <StudentChart data={chartData} loading={loading} />
         </div>
 
-        {/* Menu Cepat Grid */}
         <div>
           <h3 className="font-bold text-gray-800 mb-3 text-lg">Aksi Cepat</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
