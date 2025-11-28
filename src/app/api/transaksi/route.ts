@@ -3,7 +3,6 @@ import { supabase } from "@/lib/supabase";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "10");
   const userId = searchParams.get("user_id");
@@ -11,14 +10,12 @@ export async function GET(request: Request) {
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
-  // Build Query
   let query = supabase
     .from("transaksi")
     .select("*, users (nama_lengkap, nim)", { count: "exact" })
     .order("tanggal_transaksi", { ascending: false })
     .range(from, to);
 
-  // Jika ada filter user
   if (userId) {
     query = query.eq("user_id", userId);
   }
@@ -39,27 +36,62 @@ export async function GET(request: Request) {
   });
 }
 
-// POST: Use Case 5 (Input Pemasukan), 6 (Pengeluaran), 5 Mhs (Bayar)
+// POST: Tambah Transaksi Baru (Dengan Validasi Saldo)
 export async function POST(request: Request) {
-  const body = await request.json();
+  try {
+    const body = await request.json();
 
-  /* Body structure:
-     {
-       user_id: 1,
-       tipe: 'PEMASUKAN' | 'PENGELUARAN',
-       nominal: 50000,
-       keterangan: 'Iuran Jan',
-       bukti_bayar: 'url_gambar',
-       status: 'PENDING' (Default) / 'VERIFIED' (Kalau admin yg input)
-     }
-  */
+    // --- VALIDASI SALDO UNTUK PENGELUARAN ---
+    if (body.tipe === "PENGELUARAN") {
+      // 1. Ambil semua transaksi yang sudah VERIFIED untuk hitung saldo
+      const { data: transactions, error: fetchError } = await supabase
+        .from("transaksi")
+        .select("tipe, nominal")
+        .eq("status", "VERIFIED");
 
-  const { data, error } = await supabase
-    .from("transaksi")
-    .insert([body])
-    .select();
+      if (fetchError) throw new Error(fetchError.message);
 
-  if (error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+      // 2. Hitung Saldo Saat Ini
+      const totalPemasukan =
+        transactions
+          ?.filter((t) => t.tipe === "PEMASUKAN")
+          .reduce((acc, curr) => acc + curr.nominal, 0) || 0;
+
+      const totalPengeluaran =
+        transactions
+          ?.filter((t) => t.tipe === "PENGELUARAN")
+          .reduce((acc, curr) => acc + curr.nominal, 0) || 0;
+
+      const saldoSaatIni = totalPemasukan - totalPengeluaran;
+
+      // 3. Cek apakah saldo cukup
+      if (saldoSaatIni < Number(body.nominal)) {
+        return NextResponse.json(
+          {
+            message: `Saldo tidak cukup! Saldo saat ini: Rp ${saldoSaatIni.toLocaleString(
+              "id-ID"
+            )}. Transaksi dibatalkan.`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+    // ----------------------------------------
+
+    // Jika tipe PEMASUKAN atau saldo cukup, lanjutkan simpan
+    const { data, error } = await supabase
+      .from("transaksi")
+      .insert([body])
+      .select();
+
+    if (error)
+      return NextResponse.json({ message: error.message }, { status: 500 });
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    return NextResponse.json(
+      { message: error.message || "Internal Error" },
+      { status: 500 }
+    );
+  }
 }

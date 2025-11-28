@@ -24,7 +24,6 @@ export default function AddTransactionDialog({
   const [loading, setLoading] = useState(false);
   const [adminId, setAdminId] = useState<number | null>(null);
 
-  // State untuk File
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -41,7 +40,6 @@ export default function AddTransactionDialog({
     }
   }, []);
 
-  // Handle File Select
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
@@ -71,7 +69,7 @@ export default function AddTransactionDialog({
     try {
       let publicUrl = null;
 
-      // 1. Upload Gambar jika ada
+      // 1. Upload Gambar ke Supabase Storage (Client Side)
       if (file) {
         const fileExt = file.name.split(".").pop();
         const fileName = `admin-${Date.now()}.${fileExt}`;
@@ -87,30 +85,36 @@ export default function AddTransactionDialog({
         publicUrl = data.publicUrl;
       }
 
-      // 2. Simpan Data
-      const { error } = await supabase.from("transaksi").insert([
-        {
+      // 2. Kirim Data ke API (Server Side Validation akan berjalan di sini)
+      const response = await fetch("/api/transaksi", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           user_id: adminId,
           tipe: formData.tipe,
           nominal: parseInt(formData.nominal),
           keterangan: formData.keterangan,
-          status: "VERIFIED",
+          status: "VERIFIED", // Admin input langsung verified
           bukti_bayar: publicUrl,
           tanggal_transaksi: new Date().toISOString(),
-        },
-      ]);
+        }),
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Gagal menyimpan transaksi");
+      }
 
       toast.success("Transaksi berhasil disimpan!");
 
-      // Reset Form
       setFormData({ tipe: "PEMASUKAN", nominal: "", keterangan: "" });
       removeFile();
       setIsOpen(false);
       onSuccess();
     } catch (error: any) {
-      toast.error("Gagal menyimpan: " + error.message);
+      // Tampilkan pesan error dari API (misal: Saldo tidak cukup)
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -129,7 +133,6 @@ export default function AddTransactionDialog({
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            {/* Header */}
             <div className="flex justify-between items-center p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
               <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                 <Wallet className="w-5 h-5 text-blue-600" />
@@ -143,7 +146,6 @@ export default function AddTransactionDialog({
               </button>
             </div>
 
-            {/* Form */}
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
               {/* Tipe Transaksi */}
               <div>
@@ -214,7 +216,7 @@ export default function AddTransactionDialog({
                 />
               </div>
 
-              {/* Upload Bukti/Nota */}
+              {/* Upload Bukti */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Bukti / Nota (Opsional)
@@ -255,7 +257,6 @@ export default function AddTransactionDialog({
                 )}
               </div>
 
-              {/* Footer Buttons */}
               <div className="flex justify-end gap-3 pt-2 border-t border-gray-50">
                 <button
                   type="button"
