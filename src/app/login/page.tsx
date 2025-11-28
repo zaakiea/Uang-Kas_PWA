@@ -90,9 +90,6 @@ export default function LoginPage() {
                 setFormData({ ...formData, password: e.target.value })
               }
             />
-            <p className="text-xs text-gray-400 mt-1">
-              Format: NIM + Tgl Lahir (cth: 221060..01012002)
-            </p>
           </div>
 
           <button
