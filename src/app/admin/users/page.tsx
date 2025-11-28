@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useEffect, useState, useCallback } from "react";
 import { Search } from "lucide-react";
 import AddStudentDialog from "@/components/admin/AddStudentDialog";
 import EditStudentDialog from "@/components/admin/EditStudentDialog";
 import DeleteStudentAlert from "@/components/admin/DeleteStudentAlert";
+import Pagination from "@/components/common/Pagination"; // Import Baru
 import { toast } from "sonner";
 
 export default function AdminUsersPage() {
@@ -13,23 +13,47 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    fetchUsers();
+  // State Pagination
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
+
+  // Gunakan useCallback agar tidak re-create function saat render
+  const fetchUsers = useCallback(async (page = 1, limit = 10) => {
+    setLoading(true);
+    try {
+      // Panggil API dengan parameter page & limit
+      const res = await fetch(`/api/mahasiswa?page=${page}&limit=${limit}`);
+      const result = await res.json();
+
+      if (res.ok) {
+        setUsers(result.data || []);
+        setPagination({
+          page: result.meta.page,
+          limit: result.meta.limit,
+          total: result.meta.total || 0,
+          totalPages: result.meta.totalPages || 0,
+        });
+      } else {
+        toast.error(result.error);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Gagal memuat data");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const fetchUsers = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .eq("role", "MAHASISWA")
-      .order("nama_lengkap", { ascending: true });
+  // Fetch data saat page/limit berubah
+  useEffect(() => {
+    fetchUsers(pagination.page, pagination.limit);
+  }, [pagination.page, pagination.limit, fetchUsers]);
 
-    if (!error) setUsers(data || []);
-    else toast.error("Gagal memuat data");
-    setLoading(false);
-  };
-
+  // Client-side filtering untuk search (Opsional: bisa juga dipindah ke server side)
   const filteredUsers = users.filter(
     (user) =>
       user.nama_lengkap.toLowerCase().includes(search.toLowerCase()) ||
@@ -55,12 +79,13 @@ export default function AdminUsersPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <AddStudentDialog onSuccess={fetchUsers} />
+          <AddStudentDialog
+            onSuccess={() => fetchUsers(pagination.page, pagination.limit)}
+          />
         </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        {/* WRAPPER SCROLL HORIZONTAL */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-gray-600 min-w-[800px]">
             <thead className="bg-gray-50 text-gray-900 font-semibold border-b border-gray-200">
@@ -98,8 +123,18 @@ export default function AdminUsersPage() {
                     <td className="p-4">{user.prodi}</td>
                     <td className="p-4">{user.angkatan}</td>
                     <td className="p-4 flex justify-center gap-2">
-                      <EditStudentDialog user={user} onSuccess={fetchUsers} />
-                      <DeleteStudentAlert user={user} onSuccess={fetchUsers} />
+                      <EditStudentDialog
+                        user={user}
+                        onSuccess={() =>
+                          fetchUsers(pagination.page, pagination.limit)
+                        }
+                      />
+                      <DeleteStudentAlert
+                        user={user}
+                        onSuccess={() =>
+                          fetchUsers(pagination.page, pagination.limit)
+                        }
+                      />
                     </td>
                   </tr>
                 ))
@@ -107,12 +142,23 @@ export default function AdminUsersPage() {
             </tbody>
           </table>
         </div>
-      </div>
 
-      {/* Petunjuk Scroll di Mobile */}
-      <p className="sm:hidden text-xs text-center text-gray-400 mt-2">
-        Geser ke samping untuk melihat opsi lainnya &rarr;
-      </p>
+        {/* INTEGRASI KOMPONEN PAGINASI */}
+        {!loading && (
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            pageSize={pagination.limit}
+            totalItems={pagination.total}
+            onPageChange={(page) =>
+              setPagination((prev) => ({ ...prev, page }))
+            }
+            onPageSizeChange={(limit) =>
+              setPagination((prev) => ({ ...prev, limit }))
+            }
+          />
+        )}
+      </div>
     </div>
   );
 }

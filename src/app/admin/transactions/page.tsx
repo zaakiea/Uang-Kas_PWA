@@ -1,30 +1,52 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useEffect, useState, useCallback } from "react";
 import { ArrowDownCircle, ArrowUpCircle, Eye } from "lucide-react";
 import AddTransactionDialog from "@/components/admin/AddTransactionDialog";
 import TransactionDetailDialog from "@/components/student/TransactionDetailDialog";
+import Pagination from "@/components/common/Pagination"; // Import Pagination
+import { toast } from "sonner";
 
 export default function AdminTransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
 
-  useEffect(() => {
-    fetchTransactions();
+  // State Pagination
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
+
+  const fetchTransactions = useCallback(async (page = 1, limit = 10) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/transaksi?page=${page}&limit=${limit}`);
+      const result = await res.json();
+
+      if (res.ok) {
+        setTransactions(result.data || []);
+        setPagination({
+          page: result.meta.page,
+          limit: result.meta.limit,
+          total: result.meta.total || 0,
+          totalPages: result.meta.totalPages || 0,
+        });
+      } else {
+        toast.error(result.error);
+      }
+    } catch (err) {
+      toast.error("Gagal memuat transaksi");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const fetchTransactions = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("transaksi")
-      .select(`*, users (nama_lengkap)`)
-      .order("tanggal_transaksi", { ascending: false });
-
-    if (!error) setTransactions(data || []);
-    setLoading(false);
-  };
+  useEffect(() => {
+    fetchTransactions(pagination.page, pagination.limit);
+  }, [pagination.page, pagination.limit, fetchTransactions]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("id-ID", {
@@ -38,11 +60,12 @@ export default function AdminTransactionsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 className="text-2xl font-bold text-gray-800">Riwayat Transaksi</h1>
-        <AddTransactionDialog onSuccess={fetchTransactions} />
+        <AddTransactionDialog
+          onSuccess={() => fetchTransactions(1, pagination.limit)}
+        />
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        {/* WRAPPER SCROLL HORIZONTAL */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-gray-600 min-w-[900px]">
             <thead className="bg-gray-50 border-b border-gray-200 font-semibold text-gray-900">
@@ -81,10 +104,7 @@ export default function AdminTransactionsPage() {
                     <td className="p-4 font-medium text-gray-900 whitespace-nowrap">
                       {trx.users?.nama_lengkap || "-"}
                     </td>
-                    <td
-                      className="p-4 text-gray-500 max-w-xs truncate"
-                      title={trx.keterangan}
-                    >
+                    <td className="p-4 text-gray-500 max-w-xs truncate">
                       {trx.keterangan}
                     </td>
                     <td className="p-4 whitespace-nowrap">
@@ -135,6 +155,22 @@ export default function AdminTransactionsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* PAGINASI */}
+        {!loading && (
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            pageSize={pagination.limit}
+            totalItems={pagination.total}
+            onPageChange={(page) =>
+              setPagination((prev) => ({ ...prev, page }))
+            }
+            onPageSizeChange={(limit) =>
+              setPagination((prev) => ({ ...prev, limit }))
+            }
+          />
+        )}
       </div>
 
       <TransactionDetailDialog

@@ -1,30 +1,42 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-// GET: Use Case 8 (Lihat Daftar Transaksi) & Use Case 3 (Histori Mhs)
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const userId = searchParams.get("user_id"); // Filter by user jika ada
 
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "10");
+  const userId = searchParams.get("user_id");
+
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  // Build Query
   let query = supabase
     .from("transaksi")
-    .select(
-      `
-      *,
-      users (nama_lengkap, nim)
-    `
-    )
-    .order("tanggal_transaksi", { ascending: false });
+    .select("*, users (nama_lengkap, nim)", { count: "exact" })
+    .order("tanggal_transaksi", { ascending: false })
+    .range(from, to);
 
+  // Jika ada filter user
   if (userId) {
     query = query.eq("user_id", userId);
   }
 
-  const { data, error } = await query;
+  const { data, count, error } = await query;
 
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+
+  return NextResponse.json({
+    data,
+    meta: {
+      total: count,
+      page,
+      limit,
+      totalPages: count ? Math.ceil(count / limit) : 0,
+    },
+  });
 }
 
 // POST: Use Case 5 (Input Pemasukan), 6 (Pengeluaran), 5 Mhs (Bayar)

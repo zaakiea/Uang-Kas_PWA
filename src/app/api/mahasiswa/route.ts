@@ -1,16 +1,37 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-export async function GET() {
-  const { data, error } = await supabase
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+
+  // Ambil parameter page & limit (default: page 1, limit 10)
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "10");
+
+  // Hitung range untuk Supabase (0-based index)
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  const { data, count, error } = await supabase
     .from("users")
-    .select("*")
+    .select("*", { count: "exact" }) // Request total count
     .eq("role", "MAHASISWA")
-    .order("nama_lengkap", { ascending: true });
+    .order("nama_lengkap", { ascending: true })
+    .range(from, to); // Ambil data sesuai range
 
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+
+  // Return data beserta metadata pagination
+  return NextResponse.json({
+    data,
+    meta: {
+      total: count, // Total semua data
+      page,
+      limit,
+      totalPages: count ? Math.ceil(count / limit) : 0,
+    },
+  });
 }
 
 export async function POST(request: Request) {
