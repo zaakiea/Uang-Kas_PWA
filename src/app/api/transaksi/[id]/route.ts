@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-// PUT: Update Status (Verifikasi)
+// PUT: Update Status & Keterangan
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { status } = await request.json(); // Kirim { status: 'VERIFIED' }
-  const { id } = await params;
+  const body = await request.json(); // Terima semua data body (status, keterangan, dll)
+  const { id } = await context.params;
 
   const { data, error } = await supabase
     .from("transaksi")
-    .update({ status })
+    .update(body) // Update sesuai payload yang dikirim
     .eq("id", id)
     .select();
 
@@ -20,12 +20,12 @@ export async function PUT(
   return NextResponse.json(data);
 }
 
-// GET: Use Case 9 (Detail Transaksi)
+// GET: Use Case 9 (Detail Transaksi) - TIDAK PERLU DIUBAH
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  const { id } = await context.params;
   const { data, error } = await supabase
     .from("transaksi")
     .select("*, users(nama_lengkap, nim)")

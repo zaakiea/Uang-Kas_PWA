@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
-import AddTransactionDialog from "@/components/admin/AddTransactionDialog"; // Import Dialog
+import { ArrowDownCircle, ArrowUpCircle, Eye } from "lucide-react"; // Import Eye icon
+import AddTransactionDialog from "@/components/admin/AddTransactionDialog";
+// Kita gunakan ulang komponen detail dari folder student karena fungsinya sama persis
+import TransactionDetailDialog from "@/components/student/TransactionDetailDialog";
 
 export default function AdminTransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null); // State untuk dialog detail
 
   useEffect(() => {
     fetchTransactions();
@@ -39,11 +42,9 @@ export default function AdminTransactionsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header dengan Tombol Tambah */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 className="text-2xl font-bold text-gray-800">Riwayat Transaksi</h1>
-
-        {/* Tombol Tambah Transaksi */}
         <AddTransactionDialog onSuccess={fetchTransactions} />
       </div>
 
@@ -58,18 +59,19 @@ export default function AdminTransactionsPage() {
                 <th className="p-4">Tipe</th>
                 <th className="p-4">Status</th>
                 <th className="p-4 text-right">Nominal</th>
+                <th className="p-4 text-center">Aksi</th> {/* Kolom Baru */}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="p-6 text-center">
+                  <td colSpan={7} className="p-6 text-center">
                     Loading...
                   </td>
                 </tr>
               ) : transactions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-6 text-center">
+                  <td colSpan={7} className="p-6 text-center">
                     Belum ada data transaksi.
                   </td>
                 </tr>
@@ -85,7 +87,10 @@ export default function AdminTransactionsPage() {
                     <td className="p-4 font-medium text-gray-900">
                       {trx.users?.nama_lengkap || "-"}
                     </td>
-                    <td className="p-4 text-gray-500 max-w-xs truncate">
+                    <td
+                      className="p-4 text-gray-500 max-w-xs truncate"
+                      title={trx.keterangan}
+                    >
                       {trx.keterangan}
                     </td>
                     <td className="p-4">
@@ -122,6 +127,17 @@ export default function AdminTransactionsPage() {
                       {trx.tipe === "PENGELUARAN" ? "- " : "+ "}
                       Rp {trx.nominal.toLocaleString("id-ID")}
                     </td>
+
+                    {/* Tombol Aksi Lihat Detail */}
+                    <td className="p-4 text-center">
+                      <button
+                        onClick={() => setSelectedTransaction(trx)}
+                        className="p-2 text-gray-500 hover:bg-gray-100 hover:text-blue-600 rounded-lg transition-colors"
+                        title="Lihat Detail"
+                      >
+                        <Eye size={18} />
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -129,6 +145,12 @@ export default function AdminTransactionsPage() {
           </table>
         </div>
       </div>
+
+      {/* Render Dialog Detail */}
+      <TransactionDetailDialog
+        transaction={selectedTransaction}
+        onClose={() => setSelectedTransaction(null)}
+      />
     </div>
   );
 }

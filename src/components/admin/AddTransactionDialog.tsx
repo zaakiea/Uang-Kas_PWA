@@ -2,8 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Plus, X, Wallet } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  X,
+  Wallet,
+  UploadCloud,
+  Image as ImageIcon,
+} from "lucide-react";
 import { toast } from "sonner";
+import Image from "next/image";
 
 interface AddTransactionDialogProps {
   onSuccess: () => void;
@@ -15,6 +23,10 @@ export default function AddTransactionDialog({
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [adminId, setAdminId] = useState<number | null>(null);
+
+  // State untuk File
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     tipe: "PEMASUKAN",
@@ -29,6 +41,24 @@ export default function AddTransactionDialog({
     }
   }, []);
 
+  // Handle File Select
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      if (selectedFile.size > 2 * 1024 * 1024) {
+        toast.error("Maksimal ukuran file 2MB");
+        return;
+      }
+      setFile(selectedFile);
+      setPreviewUrl(URL.createObjectURL(selectedFile));
+    }
+  };
+
+  const removeFile = () => {
+    setFile(null);
+    setPreviewUrl(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!adminId) {
@@ -39,13 +69,33 @@ export default function AddTransactionDialog({
     setLoading(true);
 
     try {
+      let publicUrl = null;
+
+      // 1. Upload Gambar jika ada
+      if (file) {
+        const fileExt = file.name.split(".").pop();
+        const fileName = `admin-${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("bukti-bayar")
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage
+          .from("bukti-bayar")
+          .getPublicUrl(fileName);
+        publicUrl = data.publicUrl;
+      }
+
+      // 2. Simpan Data
       const { error } = await supabase.from("transaksi").insert([
         {
           user_id: adminId,
           tipe: formData.tipe,
           nominal: parseInt(formData.nominal),
           keterangan: formData.keterangan,
-          status: "VERIFIED", // Admin input langsung verified
+          status: "VERIFIED",
+          bukti_bayar: publicUrl,
           tanggal_transaksi: new Date().toISOString(),
         },
       ]);
@@ -54,10 +104,11 @@ export default function AddTransactionDialog({
 
       toast.success("Transaksi berhasil disimpan!");
 
-      // Reset form dan tutup dialog
+      // Reset Form
       setFormData({ tipe: "PEMASUKAN", nominal: "", keterangan: "" });
+      removeFile();
       setIsOpen(false);
-      onSuccess(); // Refresh tabel di halaman induk
+      onSuccess();
     } catch (error: any) {
       toast.error("Gagal menyimpan: " + error.message);
     } finally {
@@ -77,9 +128,9 @@ export default function AddTransactionDialog({
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             {/* Header */}
-            <div className="flex justify-between items-center p-6 border-b border-gray-100">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
               <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                 <Wallet className="w-5 h-5 text-blue-600" />
                 Input Kas Manual
@@ -107,11 +158,11 @@ export default function AddTransactionDialog({
                     }
                     className={`p-2.5 rounded-lg border text-sm font-medium transition-all ${
                       formData.tipe === "PEMASUKAN"
-                        ? "bg-green-50 border-green-500 text-green-700 shadow-sm ring-1 ring-green-500"
+                        ? "bg-green-50 border-green-500 text-green-700 ring-1 ring-green-500"
                         : "border-gray-200 text-gray-600 hover:bg-gray-50"
                     }`}
                   >
-                    Pemasukan (Debit)
+                    Pemasukan
                   </button>
                   <button
                     type="button"
@@ -120,11 +171,11 @@ export default function AddTransactionDialog({
                     }
                     className={`p-2.5 rounded-lg border text-sm font-medium transition-all ${
                       formData.tipe === "PENGELUARAN"
-                        ? "bg-red-50 border-red-500 text-red-700 shadow-sm ring-1 ring-red-500"
+                        ? "bg-red-50 border-red-500 text-red-700 ring-1 ring-red-500"
                         : "border-gray-200 text-gray-600 hover:bg-gray-50"
                     }`}
                   >
-                    Pengeluaran (Kredit)
+                    Pengeluaran
                   </button>
                 </div>
               </div>
@@ -139,7 +190,7 @@ export default function AddTransactionDialog({
                   required
                   min="0"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-900"
-                  placeholder="Contoh: 50000"
+                  placeholder="50000"
                   value={formData.nominal}
                   onChange={(e) =>
                     setFormData({ ...formData, nominal: e.target.value })
@@ -154,8 +205,8 @@ export default function AddTransactionDialog({
                 </label>
                 <textarea
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none bg-white text-gray-900"
-                  placeholder="Contoh: Beli Spidol, Uang Kas Bulan Mei..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-20 resize-none bg-white text-gray-900"
+                  placeholder="Contoh: Pembelian Spidol..."
                   value={formData.keterangan}
                   onChange={(e) =>
                     setFormData({ ...formData, keterangan: e.target.value })
@@ -163,8 +214,49 @@ export default function AddTransactionDialog({
                 />
               </div>
 
+              {/* Upload Bukti/Nota */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Bukti / Nota (Opsional)
+                </label>
+
+                {!previewUrl ? (
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6 text-gray-500">
+                      <UploadCloud className="w-8 h-8 mb-2 text-gray-400" />
+                      <p className="text-xs font-medium">
+                        Klik untuk upload gambar
+                      </p>
+                      <p className="text-[10px] mt-1">JPG, PNG (Max 2MB)</p>
+                    </div>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                    />
+                  </label>
+                ) : (
+                  <div className="relative w-full h-40 bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
+                    <Image
+                      src={previewUrl}
+                      alt="Preview"
+                      fill
+                      className="object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeFile}
+                      className="absolute top-2 right-2 bg-red-600 text-white p-1.5 rounded-full hover:bg-red-700 transition"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {/* Footer Buttons */}
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-3 pt-2 border-t border-gray-50">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
