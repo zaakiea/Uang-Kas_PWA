@@ -96,6 +96,7 @@ export default function VerificationsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header & Search */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
@@ -118,8 +119,8 @@ export default function VerificationsPage() {
         </div>
       </div>
 
+      {/* Tabel Container */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        {/* WRAPPER SCROLL HORIZONTAL */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-gray-600 min-w-[900px]">
             <thead className="bg-gray-50 text-gray-900 font-semibold border-b border-gray-200">
@@ -221,26 +222,38 @@ export default function VerificationsPage() {
         </div>
       </div>
 
+      {/* --- MODAL PREVIEW GAMBAR YANG DIPERBAIKI --- */}
       {selectedImage && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
           onClick={() => setSelectedImage(null)}
         >
-          <div className="relative max-w-3xl max-h-[90vh] w-full">
+          {/* Container Relatif untuk menampung gambar responsif */}
+          <div
+            className="relative w-full h-full max-w-5xl max-h-[90vh] flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()} // Agar klik di gambar tidak menutup modal
+          >
+            {/* Gunakan 'fill' + 'object-contain' agar gambar pas di layar tanpa terpotong */}
             <Image
               src={selectedImage}
-              alt="Bukti"
-              width={800}
-              height={800}
-              className="object-contain w-full h-full rounded-lg"
+              alt="Bukti Full"
+              fill
+              className="object-contain rounded-md"
+              unoptimized // Opsional: Membantu jika gambar dari external URL yang ukurannya variatif
             />
-            <button className="absolute top-2 right-2 p-2 bg-white/20 text-white rounded-full hover:bg-white/40">
+
+            {/* Tombol Close */}
+            <button
+              className="absolute top-2 right-2 md:top-4 md:right-4 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition z-50"
+              onClick={() => setSelectedImage(null)}
+            >
               <X size={24} />
             </button>
           </div>
         </div>
       )}
 
+      {/* Modal Tolak */}
       {rejectDialog.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
