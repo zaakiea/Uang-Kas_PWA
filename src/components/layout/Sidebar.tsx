@@ -7,7 +7,7 @@ import { LogOut, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import Image from "next/image"; // Import Image dari Next.js
+import Image from "next/image";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -45,8 +45,8 @@ export default function Sidebar({ role }: SidebarProps) {
       {/* --- MOBILE HEADER --- */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm h-16 transition-all duration-300">
         <div className="flex items-center gap-3">
-          {/* Logo Mobile */}
-          <div className="relative w-8 h-8">
+          {/* Logo Mobile (Ukuran Sedang: w-9 h-9) */}
+          <div className="relative w-7 h-7">
             <Image
               src="/logo.webp"
               alt="DigiKas Logo"
@@ -54,13 +54,13 @@ export default function Sidebar({ role }: SidebarProps) {
               className="object-contain rounded-md"
             />
           </div>
-          <span className="font-bold text-gray-900 text-lg">DigiKas</span>
+          <span className="font-bold text-blue-600 text-lg">DigiKas</span>
         </div>
         <button
           onClick={() => setIsOpen(true)}
           className="p-2 text-gray-600 hover:bg-gray-100 rounded-md active:scale-95 transition-transform"
         >
-          <Menu size={24} />
+          <Menu size={26} />
         </button>
       </div>
 
@@ -83,19 +83,21 @@ export default function Sidebar({ role }: SidebarProps) {
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Header Sidebar Desktop */}
+          {/* --- Header Sidebar Desktop --- */}
           <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100 shrink-0">
-            <div className="flex items-center gap-3">
-              {/* Logo Desktop */}
-              <div className="relative w-8 h-8">
+            <div className="flex items-center gap-3 w-full">
+              {/* Logo Desktop (Ukuran Pas: w-10 h-10) */}
+              <div className="relative w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
                 <Image
                   src="/logo.webp"
                   alt="DigiKas Logo"
                   fill
-                  className="object-contain rounded-md"
+                  className="object-cover"
                 />
               </div>
-              <span className="text-xl font-bold text-gray-900">DigiKas</span>
+              <span className="text-xl font-bold text-blue-600 truncate">
+                DigiKas
+              </span>
             </div>
             <button
               onClick={() => setIsOpen(false)}
@@ -114,7 +116,7 @@ export default function Sidebar({ role }: SidebarProps) {
                   key={index}
                   href={item.path}
                   className={cn(
-                    "flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 group",
+                    "flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
                     isActive
                       ? "bg-blue-50 text-blue-700 shadow-sm"
                       : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
@@ -128,7 +130,7 @@ export default function Sidebar({ role }: SidebarProps) {
                         : "text-gray-400 group-hover:text-gray-600"
                     )}
                   />
-                  {item.title}
+                  <span className="text-sm">{item.title}</span>
                 </Link>
               );
             })}
@@ -141,7 +143,7 @@ export default function Sidebar({ role }: SidebarProps) {
               className="flex items-center w-full px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors group"
             >
               <LogOut className="w-5 h-5 mr-3 group-hover:text-red-700 transition-colors" />
-              Keluar
+              <span>Keluar</span>
             </button>
           </div>
         </div>
