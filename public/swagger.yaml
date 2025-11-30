@@ -1,0 +1,324 @@
+openapi: 3.0.0
+info:
+  title: Uang Kas Digital API
+  description: Dokumentasi API untuk aplikasi Uang Kas Angkatan (Next.js 15 + Supabase)
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Local Development Server
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        nim:
+          type: string
+        nama_lengkap:
+          type: string
+        role:
+          type: string
+          enum: [ADMIN, MAHASISWA]
+        prodi:
+          type: string
+        angkatan:
+          type: string
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        tipe:
+          type: string
+          enum: [PEMASUKAN, PENGELUARAN]
+        nominal:
+          type: number
+        keterangan:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, VERIFIED, REJECTED]
+        tanggal_transaksi:
+          type: string
+          format: date-time
+
+paths:
+  # --- AUTHENTICATION ---
+  /auth/login:
+    post:
+      summary: Login User (Admin/Mahasiswa)
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nim:
+                  type: string
+                  example: "123456"
+                password:
+                  type: string
+                  example: "12345620230101"
+      responses:
+        200:
+          description: Login berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: "#/components/schemas/User"
+        401:
+          description: Password salah
+        404:
+          description: User tidak ditemukan
+
+  # --- DASHBOARD ---
+  /dashboard:
+    get:
+      summary: Get Admin Dashboard Stats
+      tags: [Dashboard]
+      responses:
+        200:
+          description: Statistik total kas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_pemasukan:
+                    type: number
+                  total_pengeluaran:
+                    type: number
+                  saldo_kas:
+                    type: number
+
+  /dashboard/chart:
+    get:
+      summary: Get Monthly Chart Data
+      tags: [Dashboard]
+      responses:
+        200:
+          description: Data grafik per bulan
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: "Jan"
+                    pemasukan:
+                      type: number
+                    pengeluaran:
+                      type: number
+
+  /student/dashboard:
+    get:
+      summary: Get Student Personal Dashboard
+      tags: [Dashboard]
+      parameters:
+        - in: query
+          name: user_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Statistik personal mahasiswa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stats:
+                    type: object
+                    properties:
+                      saldo_angkatan:
+                        type: number
+                      total_pengeluaran:
+                        type: number
+                      uang_saya:
+                        type: number
+                  chart_data:
+                    type: array
+                    items:
+                      type: object
+
+  # --- MAHASISWA ---
+  /mahasiswa:
+    get:
+      summary: Get All Mahasiswa (Paginated)
+      tags: [Mahasiswa]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        200:
+          description: List data mahasiswa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      totalPages:
+                        type: integer
+
+    post:
+      summary: Create New Mahasiswa
+      tags: [Mahasiswa]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        201:
+          description: Mahasiswa created
+
+  /mahasiswa/{id}:
+    put:
+      summary: Update Mahasiswa
+      tags: [Mahasiswa]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        200:
+          description: Updated successfully
+    delete:
+      summary: Delete Mahasiswa
+      tags: [Mahasiswa]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: User deleted
+
+  # --- TRANSAKSI ---
+  /transaksi:
+    get:
+      summary: Get Transactions List
+      tags: [Transaksi]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: user_id
+          description: Filter by specific user
+          schema:
+            type: integer
+      responses:
+        200:
+          description: List transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Transaction"
+
+    post:
+      summary: Create Transaction (Input Kas/Bayar)
+      tags: [Transaksi]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Transaction"
+      responses:
+        200:
+          description: Transaction created
+        400:
+          description: Saldo tidak cukup (untuk pengeluaran)
+
+  /transaksi/{id}:
+    get:
+      summary: Get Transaction Detail
+      tags: [Transaksi]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Detail found
+
+    put:
+      summary: Update Transaction (Verify/Reject)
+      tags: [Transaksi]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [VERIFIED, REJECTED]
+                keterangan:
+                  type: string
+      responses:
+        200:
+          description: Status updated
