@@ -127,9 +127,6 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
-              <p className="text-xs text-right text-gray-400">
-                Default: NIM + DDMMYYYY (Cth: 211201...01012002)
-              </p>
             </div>
 
             {/* Tombol Submit */}

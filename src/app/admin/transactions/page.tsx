@@ -1,18 +1,29 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { ArrowDownCircle, ArrowUpCircle, Eye } from "lucide-react";
+import {
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Eye,
+  Search,
+  Filter,
+} from "lucide-react";
 import AddTransactionDialog from "@/components/admin/AddTransactionDialog";
 import TransactionDetailDialog from "@/components/student/TransactionDetailDialog";
-import Pagination from "@/components/common/Pagination"; // Import Pagination
+import Pagination from "@/components/common/Pagination";
 import { toast } from "sonner";
+import { useDebounce } from "@/hooks/useDebounce"; // Import Hook
 
 export default function AdminTransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
 
-  // State Pagination
+  // State Filter & Search
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState("ALL");
+
+  // Pagination State
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -20,33 +31,68 @@ export default function AdminTransactionsPage() {
     totalPages: 0,
   });
 
-  const fetchTransactions = useCallback(async (page = 1, limit = 10) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/transaksi?page=${page}&limit=${limit}`);
-      const result = await res.json();
+  // IMPLEMENTASI useDebounce
+  // Nilai 'debouncedSearch' hanya akan berubah 500ms setelah user berhenti mengetik
+  const debouncedSearch = useDebounce(search, 500);
 
-      if (res.ok) {
-        setTransactions(result.data || []);
-        setPagination({
-          page: result.meta.page,
-          limit: result.meta.limit,
-          total: result.meta.total || 0,
-          totalPages: result.meta.totalPages || 0,
-        });
-      } else {
-        toast.error(result.error);
+  const fetchTransactions = useCallback(
+    async (page = 1, limit = 10, searchTerm = "", type = "ALL") => {
+      setLoading(true);
+      try {
+        let url = `/api/transaksi?page=${page}&limit=${limit}`;
+
+        // Gunakan searchTerm yang sudah di-debounce
+        if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+        if (type !== "ALL") url += `&tipe=${type}`;
+
+        const res = await fetch(url);
+        const result = await res.json();
+
+        if (res.ok) {
+          setTransactions(result.data || []);
+          setPagination({
+            page: result.meta.page,
+            limit: result.meta.limit,
+            total: result.meta.total || 0,
+            totalPages: result.meta.totalPages || 0,
+          });
+        } else {
+          toast.error(result.error);
+        }
+      } catch (err) {
+        toast.error("Gagal memuat transaksi");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      toast.error("Gagal memuat transaksi");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    []
+  );
 
+  // Trigger fetch saat debouncedSearch, filterType, atau page berubah
   useEffect(() => {
-    fetchTransactions(pagination.page, pagination.limit);
-  }, [pagination.page, pagination.limit, fetchTransactions]);
+    // Jika search berubah, reset ke halaman 1
+    if (debouncedSearch !== "" && pagination.page !== 1) {
+      setPagination((prev) => ({ ...prev, page: 1 }));
+      fetchTransactions(1, pagination.limit, debouncedSearch, filterType);
+    } else {
+      fetchTransactions(
+        pagination.page,
+        pagination.limit,
+        debouncedSearch,
+        filterType
+      );
+    }
+  }, [
+    debouncedSearch,
+    filterType,
+    pagination.page,
+    pagination.limit,
+    fetchTransactions,
+  ]);
+
+  const handlePageChange = (page: number) => {
+    setPagination((prev) => ({ ...prev, page }));
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("id-ID", {
@@ -58,13 +104,49 @@ export default function AdminTransactionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold text-gray-800">Riwayat Transaksi</h1>
         <AddTransactionDialog
-          onSuccess={() => fetchTransactions(1, pagination.limit)}
+          onSuccess={() =>
+            fetchTransactions(1, pagination.limit, debouncedSearch, filterType)
+          }
         />
       </div>
 
+      {/* --- FILTER SECTION --- */}
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        {/* Search Nama */}
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Cari nama mahasiswa..."
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50 focus:bg-white transition-all text-gray-900"
+            value={search} // Binding ke state 'search' (langsung update UI)
+            onChange={(e) => setSearch(e.target.value)} // useDebounce akan memproses perubahan ini
+          />
+        </div>
+
+        {/* Filter Tipe */}
+        <div className="relative w-full sm:w-48">
+          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <select
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50 focus:bg-white transition-all text-gray-900 appearance-none cursor-pointer"
+            value={filterType}
+            onChange={(e) => {
+              setFilterType(e.target.value);
+              setPagination((prev) => ({ ...prev, page: 1 })); // Reset page saat filter ganti
+            }}
+          >
+            <option value="ALL">Semua Tipe</option>
+            <option value="PEMASUKAN">Pemasukan</option>
+            <option value="PENGELUARAN">Pengeluaran</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Tabel */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-gray-600 min-w-[900px]">
@@ -82,14 +164,17 @@ export default function AdminTransactionsPage() {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="p-6 text-center">
-                    Loading...
+                  <td colSpan={7} className="p-8 text-center text-gray-500">
+                    Memuat data...
                   </td>
                 </tr>
               ) : transactions.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-6 text-center">
-                    Belum ada data transaksi.
+                  <td colSpan={7} className="p-8 text-center text-gray-500">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Search className="w-8 h-8 text-gray-300" />
+                      <p>Tidak ada transaksi ditemukan.</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -104,35 +189,38 @@ export default function AdminTransactionsPage() {
                     <td className="p-4 font-medium text-gray-900 whitespace-nowrap">
                       {trx.users?.nama_lengkap || "-"}
                     </td>
-                    <td className="p-4 text-gray-500 max-w-xs truncate">
+                    <td
+                      className="p-4 text-gray-500 max-w-xs truncate"
+                      title={trx.keterangan}
+                    >
                       {trx.keterangan}
                     </td>
                     <td className="p-4 whitespace-nowrap">
                       {trx.tipe === "PEMASUKAN" ? (
-                        <span className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded text-xs w-fit font-medium">
+                        <span className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded text-xs w-fit font-medium border border-green-100">
                           <ArrowUpCircle className="w-3 h-3" /> Masuk
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-1 rounded text-xs w-fit font-medium">
+                        <span className="flex items-center gap-1 text-red-600 bg-red-50 px-2 py-1 rounded text-xs w-fit font-medium border border-red-100">
                           <ArrowDownCircle className="w-3 h-3" /> Keluar
                         </span>
                       )}
                     </td>
                     <td className="p-4 whitespace-nowrap">
                       <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${
+                        className={`px-2 py-1 rounded text-xs font-medium border ${
                           trx.status === "VERIFIED"
-                            ? "bg-blue-50 text-blue-700 border border-blue-100"
+                            ? "bg-blue-50 text-blue-700 border-blue-100"
                             : trx.status === "REJECTED"
-                            ? "bg-red-50 text-red-700 border border-red-100"
-                            : "bg-yellow-50 text-yellow-700 border border-yellow-100"
+                            ? "bg-red-50 text-red-700 border-red-100"
+                            : "bg-yellow-50 text-yellow-700 border-yellow-100"
                         }`}
                       >
                         {trx.status}
                       </span>
                     </td>
                     <td
-                      className={`p-4 text-right font-semibold whitespace-nowrap ${
+                      className={`p-4 text-right font-bold whitespace-nowrap ${
                         trx.tipe === "PEMASUKAN"
                           ? "text-green-600"
                           : "text-red-600"
@@ -145,6 +233,7 @@ export default function AdminTransactionsPage() {
                       <button
                         onClick={() => setSelectedTransaction(trx)}
                         className="p-2 text-gray-500 hover:bg-gray-100 hover:text-blue-600 rounded-lg transition-colors"
+                        title="Lihat Detail"
                       >
                         <Eye size={18} />
                       </button>
@@ -156,18 +245,16 @@ export default function AdminTransactionsPage() {
           </table>
         </div>
 
-        {/* PAGINASI */}
+        {/* Paginasi */}
         {!loading && (
           <Pagination
             currentPage={pagination.page}
             totalPages={pagination.totalPages}
             pageSize={pagination.limit}
             totalItems={pagination.total}
-            onPageChange={(page) =>
-              setPagination((prev) => ({ ...prev, page }))
-            }
+            onPageChange={handlePageChange}
             onPageSizeChange={(limit) =>
-              setPagination((prev) => ({ ...prev, limit }))
+              setPagination((prev) => ({ ...prev, limit, page: 1 }))
             }
           />
         )}
