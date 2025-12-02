@@ -1,71 +1,135 @@
 openapi: 3.0.0
 info:
-  title: Uang Kas Digital API
-  description: Dokumentasi API untuk aplikasi Uang Kas Angkatan (Next.js 15 + Supabase)
+  title: DigiKas API Documentation
+  description: Dokumentasi API lengkap untuk aplikasi Uang Kas Digital (DigiKas) berbasis Next.js 15 & Supabase.
   version: 1.0.0
 servers:
   - url: http://localhost:3000/api
-    description: Local Development Server
+    description: Development Server
+  - url: https://uang-kas-digital.vercel.app/api
+    description: Production Server
 
 components:
+  securitySchemes:
+    # Karena pakai localStorage, autentikasi di handle di frontend
+    # tapi kita bisa definisikan skema user session jika perlu
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+
   schemas:
     User:
       type: object
       properties:
         id:
           type: integer
+          example: 1
         nim:
           type: string
+          example: "21120123130068"
         nama_lengkap:
           type: string
+          example: "Budi Santoso"
         role:
           type: string
           enum: [ADMIN, MAHASISWA]
+          example: "MAHASISWA"
         prodi:
           type: string
+          example: "Teknik Komputer"
+        fakultas:
+          type: string
+          example: "Teknik"
         angkatan:
           type: string
+          example: "2023"
+        no_hp:
+          type: string
+          example: "081234567890"
+        email:
+          type: string
+          format: email
+          example: "budi@example.com"
+        tanggal_lahir:
+          type: string
+          format: date
+          example: "2003-05-20"
 
     Transaction:
       type: object
       properties:
         id:
           type: integer
+          example: 101
         user_id:
           type: integer
+          example: 1
         tipe:
           type: string
           enum: [PEMASUKAN, PENGELUARAN]
+          example: "PEMASUKAN"
         nominal:
           type: number
+          example: 50000
         keterangan:
           type: string
+          example: "Iuran Bulan November 2025"
+        bukti_bayar:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://supabase.co/storage/v1/object/public/bukti-bayar/img.jpg"
         status:
           type: string
           enum: [PENDING, VERIFIED, REJECTED]
+          example: "PENDING"
         tanggal_transaksi:
           type: string
           format: date-time
+          example: "2025-11-20T10:00:00Z"
+        users:
+          $ref: "#/components/schemas/User"
+
+    PaginationMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 50
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        totalPages:
+          type: integer
+          example: 5
 
 paths:
-  # --- AUTHENTICATION ---
+  # --------------------------
+  # AUTHENTICATION
+  # --------------------------
   /auth/login:
     post:
-      summary: Login User (Admin/Mahasiswa)
-      tags: [Auth]
+      summary: Login User
+      description: Autentikasi untuk Admin dan Mahasiswa menggunakan NIM dan Password.
+      tags: [Authentication]
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [nim, password]
               properties:
                 nim:
                   type: string
                   example: "123456"
                 password:
                   type: string
-                  example: "12345620230101"
+                  example: "12345620030520"
       responses:
         200:
           description: Login berhasil
@@ -76,6 +140,7 @@ paths:
                 properties:
                   message:
                     type: string
+                    example: "Login berhasil"
                   user:
                     $ref: "#/components/schemas/User"
         401:
@@ -83,14 +148,17 @@ paths:
         404:
           description: User tidak ditemukan
 
-  # --- DASHBOARD ---
+  # --------------------------
+  # DASHBOARD
+  # --------------------------
   /dashboard:
     get:
       summary: Get Admin Dashboard Stats
+      description: Mengembalikan ringkasan total pemasukan, pengeluaran, dan saldo kas saat ini.
       tags: [Dashboard]
       responses:
         200:
-          description: Statistik total kas
+          description: Berhasil mengambil data statistik
           content:
             application/json:
               schema:
@@ -98,18 +166,22 @@ paths:
                 properties:
                   total_pemasukan:
                     type: number
+                    example: 15000000
                   total_pengeluaran:
                     type: number
+                    example: 5000000
                   saldo_kas:
                     type: number
+                    example: 10000000
 
   /dashboard/chart:
     get:
-      summary: Get Monthly Chart Data
+      summary: Get Chart Data (Bulanan)
+      description: Data agregasi pemasukan vs pengeluaran per bulan untuk tahun berjalan.
       tags: [Dashboard]
       responses:
         200:
-          description: Data grafik per bulan
+          description: Array data grafik
           content:
             application/json:
               schema:
@@ -122,12 +194,15 @@ paths:
                       example: "Jan"
                     pemasukan:
                       type: number
+                      example: 500000
                     pengeluaran:
                       type: number
+                      example: 200000
 
   /student/dashboard:
     get:
       summary: Get Student Personal Dashboard
+      description: Statistik khusus mahasiswa (Saldo Angkatan, Pengeluaran Global, Kontribusi Pribadi).
       tags: [Dashboard]
       parameters:
         - in: query
@@ -135,9 +210,10 @@ paths:
           required: true
           schema:
             type: integer
+          description: ID dari mahasiswa yang sedang login
       responses:
         200:
-          description: Statistik personal mahasiswa
+          description: Data dashboard personal
           content:
             application/json:
               schema:
@@ -156,11 +232,23 @@ paths:
                     type: array
                     items:
                       type: object
+                      properties:
+                        name:
+                          type: string
+                        pemasukan_angkatan:
+                          type: number
+                        pengeluaran_angkatan:
+                          type: number
+                        bayaran_saya:
+                          type: number
 
-  # --- MAHASISWA ---
+  # --------------------------
+  # MANAJEMEN MAHASISWA
+  # --------------------------
   /mahasiswa:
     get:
-      summary: Get All Mahasiswa (Paginated)
+      summary: Get All Mahasiswa
+      description: Mengambil daftar mahasiswa dengan fitur paginasi.
       tags: [Mahasiswa]
       parameters:
         - in: query
@@ -186,27 +274,42 @@ paths:
                     items:
                       $ref: "#/components/schemas/User"
                   meta:
-                    type: object
-                    properties:
-                      total:
-                        type: integer
-                      page:
-                        type: integer
-                      totalPages:
-                        type: integer
+                    $ref: "#/components/schemas/PaginationMeta"
 
     post:
       summary: Create New Mahasiswa
+      description: Admin menambahkan data mahasiswa baru. Password default di-generate (NIM + DDMMYYYY).
       tags: [Mahasiswa]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/User"
+              type: object
+              properties:
+                nim:
+                  type: string
+                nama_lengkap:
+                  type: string
+                fakultas:
+                  type: string
+                prodi:
+                  type: string
+                angkatan:
+                  type: string
+                tanggal_lahir:
+                  type: string
+                  format: date
+                  description: YYYY-MM-DD
+                no_hp:
+                  type: string
+                email:
+                  type: string
       responses:
         201:
-          description: Mahasiswa created
+          description: Mahasiswa berhasil ditambahkan
+        409:
+          description: NIM sudah terdaftar
 
   /mahasiswa/{id}:
     put:
@@ -225,7 +328,8 @@ paths:
               $ref: "#/components/schemas/User"
       responses:
         200:
-          description: Updated successfully
+          description: Data berhasil diperbarui
+
     delete:
       summary: Delete Mahasiswa
       tags: [Mahasiswa]
@@ -237,30 +341,50 @@ paths:
             type: integer
       responses:
         200:
-          description: User deleted
+          description: User berhasil dihapus
 
-  # --- TRANSAKSI ---
+  # --------------------------
+  # TRANSAKSI & KAS
+  # --------------------------
   /transaksi:
     get:
       summary: Get Transactions List
+      description: Mengambil daftar transaksi dengan filter lengkap (Search, Tipe, Status, User).
       tags: [Transaksi]
       parameters:
         - in: query
           name: page
           schema:
             type: integer
+            default: 1
         - in: query
           name: limit
           schema:
             type: integer
+            default: 10
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Cari berdasarkan nama mahasiswa
+        - in: query
+          name: tipe
+          schema:
+            type: string
+            enum: [PEMASUKAN, PENGELUARAN, ALL]
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [PENDING, VERIFIED, REJECTED]
         - in: query
           name: user_id
-          description: Filter by specific user
           schema:
             type: integer
+          description: Filter transaksi milik user tertentu
       responses:
         200:
-          description: List transactions
+          description: List transaksi ditemukan
           content:
             application/json:
               schema:
@@ -270,20 +394,41 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/Transaction"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
 
     post:
       summary: Create Transaction (Input Kas/Bayar)
+      description: Mencatat pemasukan (Setor Kas) atau pengeluaran. Memiliki validasi saldo untuk pengeluaran.
       tags: [Transaksi]
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Transaction"
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                tipe:
+                  type: string
+                  enum: [PEMASUKAN, PENGELUARAN]
+                nominal:
+                  type: number
+                keterangan:
+                  type: string
+                bukti_bayar:
+                  type: string
+                  description: Public URL dari Supabase Storage
+                status:
+                  type: string
+                  enum: [PENDING, VERIFIED]
+                  description: Admin = VERIFIED, Mhs = PENDING
       responses:
         200:
-          description: Transaction created
+          description: Transaksi berhasil disimpan
         400:
-          description: Saldo tidak cukup (untuk pengeluaran)
+          description: Saldo kas tidak cukup (untuk pengeluaran)
 
   /transaksi/{id}:
     get:
@@ -297,10 +442,15 @@ paths:
             type: integer
       responses:
         200:
-          description: Detail found
+          description: Detail transaksi ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
 
     put:
       summary: Update Transaction (Verify/Reject)
+      description: Admin memverifikasi atau menolak setoran. Bisa juga update keterangan (alasan penolakan).
       tags: [Transaksi]
       parameters:
         - in: path
@@ -309,6 +459,7 @@ paths:
           schema:
             type: integer
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -319,6 +470,7 @@ paths:
                   enum: [VERIFIED, REJECTED]
                 keterangan:
                   type: string
+                  description: "Opsional: Update keterangan (misal alasan ditolak)"
       responses:
         200:
-          description: Status updated
+          description: Status transaksi diperbarui

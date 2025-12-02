@@ -73,29 +73,29 @@ export default function StudentChart({ data, loading }: StudentChartProps) {
             />
             <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />
 
-            {/* Bar Pengeluaran */}
+            {/* Bar Pengeluaran (Tetap Merah) */}
             <Bar
               name="Pengeluaran Total"
               dataKey="pengeluaran_angkatan"
-              fill="#ef4444" // Merah
+              fill="#ef4444" // Red-500
               radius={[4, 4, 0, 0]}
               barSize={20}
             />
 
-            {/* Bar Pemasukan Total */}
+            {/* Bar Pemasukan Total (DIBUAT BIRU) */}
             <Bar
               name="Total Pemasukan"
               dataKey="pemasukan_angkatan"
-              fill="#e5e7eb" // Abu-abu
+              fill="#2563eb" // Blue-600
               radius={[4, 4, 0, 0]}
               barSize={20}
             />
 
-            {/* Bar Bayaran Saya */}
+            {/* Bar Bayaran Saya (DIBUAT HIJAU) */}
             <Bar
               name="Setoran Saya"
               dataKey="bayaran_saya"
-              fill="#2563eb" // Biru
+              fill="#16a34a" // Green-600
               radius={[4, 4, 0, 0]}
               barSize={20}
             />

@@ -12,7 +12,7 @@ import AddTransactionDialog from "@/components/admin/AddTransactionDialog";
 import TransactionDetailDialog from "@/components/student/TransactionDetailDialog";
 import Pagination from "@/components/common/Pagination";
 import { toast } from "sonner";
-import { useDebounce } from "@/hooks/useDebounce"; // Import Hook
+import { useDebounce } from "@/hooks/useDebounce";
 
 export default function AdminTransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -31,8 +31,6 @@ export default function AdminTransactionsPage() {
     totalPages: 0,
   });
 
-  // IMPLEMENTASI useDebounce
-  // Nilai 'debouncedSearch' hanya akan berubah 500ms setelah user berhenti mengetik
   const debouncedSearch = useDebounce(search, 500);
 
   const fetchTransactions = useCallback(
@@ -40,8 +38,6 @@ export default function AdminTransactionsPage() {
       setLoading(true);
       try {
         let url = `/api/transaksi?page=${page}&limit=${limit}`;
-
-        // Gunakan searchTerm yang sudah di-debounce
         if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
         if (type !== "ALL") url += `&tipe=${type}`;
 
@@ -68,9 +64,7 @@ export default function AdminTransactionsPage() {
     []
   );
 
-  // Trigger fetch saat debouncedSearch, filterType, atau page berubah
   useEffect(() => {
-    // Jika search berubah, reset ke halaman 1
     if (debouncedSearch !== "" && pagination.page !== 1) {
       setPagination((prev) => ({ ...prev, page: 1 }));
       fetchTransactions(1, pagination.limit, debouncedSearch, filterType);
@@ -105,44 +99,55 @@ export default function AdminTransactionsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">Riwayat Transaksi</h1>
-        <AddTransactionDialog
-          onSuccess={() =>
-            fetchTransactions(1, pagination.limit, debouncedSearch, filterType)
-          }
-        />
       </div>
 
-      {/* --- FILTER SECTION --- */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        {/* Search Nama */}
-        <div className="relative flex-1">
+      {/* --- FILTER SECTION (SEJAJAR DENGAN TOMBOL) --- */}
+      <div className="flex flex-col lg:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        {/* Search Nama (Flexible Width) */}
+        <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
             placeholder="Cari nama mahasiswa..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50 focus:bg-white transition-all text-gray-900"
-            value={search} // Binding ke state 'search' (langsung update UI)
-            onChange={(e) => setSearch(e.target.value)} // useDebounce akan memproses perubahan ini
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50 focus:bg-white transition-all text-gray-900"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        {/* Filter Tipe */}
-        <div className="relative w-full sm:w-48">
-          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <select
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50 focus:bg-white transition-all text-gray-900 appearance-none cursor-pointer"
-            value={filterType}
-            onChange={(e) => {
-              setFilterType(e.target.value);
-              setPagination((prev) => ({ ...prev, page: 1 })); // Reset page saat filter ganti
-            }}
-          >
-            <option value="ALL">Semua Tipe</option>
-            <option value="PEMASUKAN">Pemasukan</option>
-            <option value="PENGELUARAN">Pengeluaran</option>
-          </select>
+        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+          {/* Filter Tipe */}
+          <div className="relative w-full sm:w-48">
+            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <select
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50 focus:bg-white transition-all text-gray-900 appearance-none cursor-pointer"
+              value={filterType}
+              onChange={(e) => {
+                setFilterType(e.target.value);
+                setPagination((prev) => ({ ...prev, page: 1 }));
+              }}
+            >
+              <option value="ALL">Semua Tipe</option>
+              <option value="PEMASUKAN">Pemasukan</option>
+              <option value="PENGELUARAN">Pengeluaran</option>
+            </select>
+          </div>
+
+          {/* Tombol Tambah Transaksi (Disini) */}
+          <div className="w-full sm:w-auto">
+            <AddTransactionDialog
+              onSuccess={() =>
+                fetchTransactions(
+                  1,
+                  pagination.limit,
+                  debouncedSearch,
+                  filterType
+                )
+              }
+            />
+          </div>
         </div>
       </div>
 

@@ -3,7 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { User, Lock, Loader2, ArrowRight, Eye, EyeOff } from "lucide-react";
+import {
+  User,
+  Lock,
+  Loader2,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Code,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export default function LoginPage() {
@@ -67,7 +75,6 @@ export default function LoginPage() {
                 />
               </div>
             </div>
-            {/* UBAH WARNA TEKS DI SINI */}
             <h1 className="text-3xl font-extrabold text-blue-600 tracking-tight">
               DigiKas
             </h1>
@@ -152,8 +159,20 @@ export default function LoginPage() {
 
         {/* Footer Card */}
         <div className="bg-gray-50 px-8 py-4 border-t border-gray-100 text-center">
-          <p className="text-xs text-gray-500">
-            &copy; {new Date().getFullYear()} DigiKas. All rights reserved.
+          <p className="text-xs text-gray-500 flex flex-col gap-3">
+            <span>
+              &copy; {new Date().getFullYear()} DigiKas. All rights reserved.
+            </span>
+            {/* Menggunakan mx-auto agar tombol berada di tengah */}
+            <a
+              href="https://discord.com/users/878915657591312447"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100 transition-colors font-semibold text-xs group mx-auto w-fit"
+            >
+              <Code size={14} />
+              <span>TunaTerbang</span>
+            </a>
           </p>
         </div>
       </div>

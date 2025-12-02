@@ -6,7 +6,6 @@ import {
   Mail,
   Phone,
   Calendar,
-  MapPin,
   Briefcase,
   GraduationCap,
 } from "lucide-react";
@@ -117,17 +116,7 @@ export default function StudentProfilePage() {
           </div>
         </div>
       </div>
-
-      {/* Tombol Logout */}
-      <button
-        onClick={() => {
-          localStorage.removeItem("user_session");
-          window.location.href = "/login";
-        }}
-        className="w-full py-3 text-red-600 font-medium bg-red-50 rounded-xl hover:bg-red-100 transition-colors border border-red-100"
-      >
-        Keluar Aplikasi
-      </button>
+      {/* Tombol Logout dihapus sesuai permintaan */}
     </div>
   );
 }
