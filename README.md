@@ -1,69 +1,74 @@
-# 💰 DigiKas - Aplikasi Uang Kas Digital
+# 💰 DigiKas – Aplikasi Uang Kas Digital
 
-![DigiKas Banner](/public/logo.webp)
+<div align="center">
 
-**DigiKas** adalah aplikasi berbasis web (Progressive Web App / PWA) yang dirancang untuk mempermudah pengelolaan uang kas angkatan/kelas mahasiswa. Aplikasi ini menawarkan transparansi keuangan, kemudahan pembayaran iuran, dan pengelolaan data yang efisien antara Admin dan Mahasiswa.
+![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)
+![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green?style=for-the-badge&logo=supabase)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css)
+![PWA](https://img.shields.io/badge/PWA-Supported-purple?style=for-the-badge&logo=pwa)
 
-Dibuat sebagai **Tugas Akhir Praktikum PPB (Pemrograman Perangkat Bergerak)**.
+</div>
+
+---
+
+## 📖 Tentang Proyek
+
+**DigiKas** adalah aplikasi web berbasis **Progressive Web App (PWA)** yang dirancang untuk mempermudah pengelolaan uang kas angkatan atau organisasi mahasiswa. Aplikasi ini menawarkan proses pencatatan keuangan yang **efisien, transparan, dan mudah digunakan** oleh Admin maupun Mahasiswa.
+
 
 ---
 
 ## 🚀 Fitur Utama
 
-### 👨‍💼 Role: Admin
+### 👨‍💼 Admin
+- Dashboard pemasukan/pengeluaran menggunakan Recharts.
+- CRUD data mahasiswa.
+- Manajemen transaksi pemasukan & pengeluaran.
+- Validasi saldo otomatis (mencegah pengeluaran berlebih).
+- Verifikasi & penolakan bukti pembayaran.
+- Laporan transaksi dengan search, filter, dan paginasi.
 
-- **Dashboard Statistik:** Grafik visual pemasukan vs pengeluaran bulanan dan ringkasan saldo total.
-- **Manajemen Mahasiswa:** Tambah, Edit, Hapus, dan Cari data anggota angkatan.
-- **Manajemen Transaksi:**
-  - Input manual untuk Pemasukan & Pengeluaran Kas.
-  - Validasi saldo otomatis (tidak bisa input pengeluaran jika saldo kurang).
-- **Verifikasi Setoran:** Menerima atau menolak bukti transfer dari mahasiswa dengan alasan penolakan.
-- **Laporan Lengkap:** Tabel riwayat transaksi dengan fitur filter dan pencarian.
-
-### 🎓 Role: Mahasiswa
-
-- **Dashboard Personal:** Memantau kontribusi setoran pribadi dibandingkan dengan total kas angkatan.
-- **Bayar Kas Online:** Upload bukti transfer atau nota pembayaran dengan mudah.
-- **Riwayat Transaksi:**
-  - **Tab Personal:** Melihat status pembayaran sendiri (Pending/Verified/Rejected).
-  - **Tab Transparansi:** Melihat arus kas global angkatan (Pemasukan & Pengeluaran).
-- **Profil Pengguna:** Melihat informasi detail akun.
+### 🎓 Mahasiswa
+- Dashboard kontribusi pribadi.
+- Upload bukti pembayaran (validasi gambar).
+- Tab riwayat transaksi pribadi.
+- Tab transparansi arus kas angkatan.
+- Halaman profil pengguna.
 
 ---
 
-## 🛠️ Teknologi yang Digunakan
+## 🛠️ Tech Stack
 
-- **Framework:** [Next.js 15](https://nextjs.org/) (App Router)
-- **Language:** TypeScript
-- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
-- **Database:** [Supabase](https://supabase.com/) (PostgreSQL)
-- **PWA:** `next-pwa` (Dapat diinstal di Android/iOS/Desktop)
-- **Charts:** Recharts (Visualisasi Data)
-- **Notifications:** Sonner (Toast)
-- **Icons:** Lucide React
+| Kategori | Teknologi |
+|---------|-----------|
+| Framework | Next.js 15 |
+| Bahasa | TypeScript |
+| Styling | Tailwind CSS v4 |
+| Database | Supabase (PostgreSQL + Storage) |
+| PWA | next-pwa |
+| Grafik | Recharts |
+| Icons | Lucide React |
+| Toast | Sonner |
+| API Documentation | Swagger UI |
 
 ---
 
-## ⚙️ Instalasi & Setup
-
-Ikuti langkah-langkah ini untuk menjalankan proyek di komputer lokal Anda.
+## ⚙️ Instalasi & Setup Lokal
 
 ### 1. Clone Repository
+```bash
+git clone https://github.com/username-anda/uang-kas-digital.git
+cd uang-kas-digital
+```
+### 2. Install Dependencies
+```bash
+npm install
+```
+### 3. Konfigurasi Database (Supabase)
+Buat proyek di Supabase, lalu jalankan query SQL berikut di SQL Editor:
 
 ```bash
-git clone [https://github.com/username-anda/uang-kas-digital.git](https://github.com/username-anda/uang-kas-digital.git)
-cd uang-kas-digital
-2. Install Dependencies
-Bash
-
-npm install
-3. Setup Database (Supabase)
-Buat proyek baru di Supabase Dashboard.
-
-Masuk ke SQL Editor dan jalankan script berikut untuk membuat tabel:
-
-SQL
-
 -- 1. Enum Type
 CREATE TYPE user_role AS ENUM ('ADMIN', 'MAHASISWA');
 CREATE TYPE trx_type AS ENUM ('PEMASUKAN', 'PENGELUARAN');
@@ -100,32 +105,45 @@ CREATE TABLE transaksi (
 -- 4. Akun Admin Default (Password: admin1 + 01012000)
 INSERT INTO users (nim, password, role, nama_lengkap, fakultas, prodi, angkatan, tanggal_lahir)
 VALUES ('admin1', 'admin101012000', 'ADMIN', 'Super Admin', 'Ilkom', 'Informatika', '2021', '2000-01-01');
-Masuk ke menu Storage, buat Bucket baru bernama bukti-bayar dan set sebagai Public Bucket.
+```
+Catatan: Jangan lupa membuat Storage Bucket bernama bukti-bayar dan atur policy menjadi Public.
 
-Tambahkan Policy pada bucket agar user bisa upload/insert gambar.
+### 4. Environment Variables
+Buat file .env.local dan isi kredensial:
 
-4. Konfigurasi Environment
-Buat file .env.local di root folder dan isi dengan kredensial Supabase Anda:
-
-Cuplikan kode
-
+```bash
 NEXT_PUBLIC_SUPABASE_URL=[https://your-project.supabase.co](https://your-project.supabase.co)
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-5. Jalankan Aplikasi
-Bash
+```
 
+### 5. Jalankan Server
+```bash
 npm run dev
+```
 Buka http://localhost:3000 di browser.
 
-📱 Catatan PWA (Progressive Web App)
-Fitur PWA (Service Worker) sengaja dimatikan saat mode development (npm run dev) agar tidak mengganggu proses coding dengan caching.
+---
 
-Untuk menguji fitur install aplikasi (PWA), jalankan mode produksi:
-
-Bash
-
+## 📱 PWA (Progressive Web App)
+Fitur PWA (Service Worker) secara sengaja dimatikan saat mode development (npm run dev) di konfigurasi next.config.ts untuk mencegah caching agresif saat proses coding.
+Untuk menguji fitur install aplikasi (PWA) dan kemampuan offline:
+### 1. Build aplikasi:
+```bash
 npm run build
-npm start
-👤 Kredit
-Dibuat oleh TunaTerbang.
 ```
+### 2. Jalankan server produksi:
+```bash
+npm run build
+```
+### 3. Buka browser, ikon "Install App" akan muncul di address bar.
+
+---
+
+## 📚 Dokumentasi API
+Proyek ini dilengkapi dengan dokumentasi API menggunakan Swagger (OpenAPI). Setelah server berjalan, akses dokumentasi lengkap di:
+
+👉 http://localhost:3000/api-doc
+
+👤 Kredit
+
+Dikembangkan oleh TunaTerbang 🐟
